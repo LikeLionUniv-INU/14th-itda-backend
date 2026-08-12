@@ -217,6 +217,7 @@ users (사용자)
 |--------|------|---------|------|
 | `id` | BIGSERIAL | PK | 요구사항 고유 ID |
 | `pin_id` | BIGINT | FK → pins.id, NOT NULL | 소속 핀 |
+| `original_id` | BIGINT | FK → requirements.id, ON DELETE SET NULL | 원본 요구사항 ID (버전 복사 시 원본 추적용) |
 | `tab_type` | VARCHAR(20) | NOT NULL | 탭: `COMMON` / `PLANNING` / `FRONTEND` / `BACKEND` / `DESIGN` |
 | `item_name` | VARCHAR(10) | | 항목명 (최대 10자) |
 | `content` | VARCHAR(200) | | 요구사항 내용 (최대 200자) |
@@ -225,6 +226,7 @@ users (사용자)
 
 **인덱스**:
 - `idx_requirements_pin_id` — (pin_id)
+- `idx_requirements_original_id` — (original_id)
 
 ---
 

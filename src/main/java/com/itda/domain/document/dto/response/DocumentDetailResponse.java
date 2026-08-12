@@ -21,7 +21,18 @@ public record DocumentDetailResponse(
             int pageNumber,
             String screenName,
             String screenId,
+            List<WireframeImageInfo> wireframeImages,
             List<PinInfo> pins
+    ) {}
+
+    public record WireframeImageInfo(
+            Long id,
+            String imageType,
+            String imageUrl,
+            Integer originalWidth,
+            Integer originalHeight,
+            Integer displayWidth,
+            Integer displayHeight
     ) {}
 
     public record PinInfo(

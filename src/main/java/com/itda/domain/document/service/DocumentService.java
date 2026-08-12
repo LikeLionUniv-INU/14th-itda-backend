@@ -11,7 +11,9 @@ import com.itda.domain.document.entity.DocumentVersion;
 import com.itda.domain.document.repository.DocumentRepository;
 import com.itda.domain.document.repository.DocumentVersionRepository;
 import com.itda.domain.page.entity.Page;
+import com.itda.domain.page.entity.WireframeImage;
 import com.itda.domain.page.repository.PageRepository;
+import com.itda.domain.page.repository.WireframeImageRepository;
 import com.itda.domain.pin.entity.Pin;
 import com.itda.domain.pin.repository.PinRepository;
 import com.itda.domain.requirement.entity.Requirement;
@@ -37,6 +39,7 @@ public class DocumentService {
     private final DocumentRepository documentRepository;
     private final DocumentVersionRepository documentVersionRepository;
     private final PageRepository pageRepository;
+    private final WireframeImageRepository wireframeImageRepository;
     private final PinRepository pinRepository;
     private final RequirementRepository requirementRepository;
     private final TeamMemberRepository teamMemberRepository;
@@ -107,11 +110,25 @@ public class DocumentService {
                             })
                             .toList();
 
+                    List<WireframeImage> images = wireframeImageRepository.findByPage_Id(page.getId());
+                    List<DocumentDetailResponse.WireframeImageInfo> imageInfos = images.stream()
+                            .map(img -> new DocumentDetailResponse.WireframeImageInfo(
+                                    img.getId(),
+                                    img.getImageType(),
+                                    img.getImageUrl(),
+                                    img.getOriginalWidth(),
+                                    img.getOriginalHeight(),
+                                    img.getDisplayWidth(),
+                                    img.getDisplayHeight()
+                            ))
+                            .toList();
+
                     return new DocumentDetailResponse.PageInfo(
                             page.getId(),
                             page.getPageNumber(),
                             page.getScreenName(),
                             page.getScreenId(),
+                            imageInfos,
                             pinInfos
                     );
                 })

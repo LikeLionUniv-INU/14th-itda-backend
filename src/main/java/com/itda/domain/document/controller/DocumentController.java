@@ -39,9 +39,10 @@ public class DocumentController {
     public ResponseEntity<ApiResponse<DocumentDetailResponse>> getDocumentVersion(
             Authentication authentication,
             @PathVariable Long documentId,
-            @PathVariable Integer version) {
+            @PathVariable Integer version,
+            @RequestParam(required = false) String lang) {
         Long userId = (Long) authentication.getPrincipal();
-        DocumentDetailResponse response = documentService.getDocumentVersion(userId, documentId, version);
+        DocumentDetailResponse response = documentService.getDocumentVersion(userId, documentId, version, lang);
         return ResponseEntity.ok(ApiResponse.ok("문서를 조회했습니다.", response));
     }
 

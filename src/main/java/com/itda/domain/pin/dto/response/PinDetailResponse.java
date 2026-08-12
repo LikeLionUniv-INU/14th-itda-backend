@@ -1,0 +1,18 @@
+package com.itda.domain.pin.dto.response;
+
+import java.util.List;
+
+public record PinDetailResponse(
+        Long id,
+        int pinNumber,
+        double xCoordinate,
+        double yCoordinate,
+        List<RequirementInfo> requirements
+) {
+    public record RequirementInfo(
+            Long id,
+            String tabType,
+            String itemName,
+            String content
+    ) {}
+}

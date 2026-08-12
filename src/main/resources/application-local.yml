@@ -1,0 +1,37 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/itda
+    username: itda
+    password: itda1234
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    show-sql: true
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+# JWT
+jwt:
+  secret: local-dev-secret-key-must-be-at-least-256-bits-long-for-hs256-algorithm
+  access-token-expiry: 900000       # 15분 (ms)
+  refresh-token-expiry: 604800000   # 7일 (ms)
+
+# S3 (MinIO)
+cloud:
+  aws:
+    s3:
+      bucket: itda
+      endpoint: http://localhost:9000
+    credentials:
+      access-key: minioadmin
+      secret-key: minioadmin
+    region:
+      static: ap-northeast-2
+
+# OpenAI
+openai:
+  api-key: ${OPENAI_API_KEY:sk-placeholder}
+  model: gpt-4o

@@ -20,6 +20,10 @@ import com.itda.domain.requirement.entity.Requirement;
 import com.itda.domain.requirement.repository.RequirementRepository;
 import com.itda.domain.team.entity.TeamMember;
 import com.itda.domain.team.repository.TeamMemberRepository;
+import com.itda.domain.translation.entity.TranslatedRequirement;
+import com.itda.domain.translation.entity.TranslationLanguage;
+import com.itda.domain.translation.repository.TranslatedRequirementRepository;
+import com.itda.domain.translation.repository.TranslationLanguageRepository;
 import com.itda.domain.user.entity.User;
 import com.itda.domain.user.repository.UserRepository;
 import com.itda.global.error.ForbiddenException;
@@ -43,6 +47,8 @@ public class DocumentService {
     private final PinRepository pinRepository;
     private final RequirementRepository requirementRepository;
     private final TeamMemberRepository teamMemberRepository;
+    private final TranslationLanguageRepository translationLanguageRepository;
+    private final TranslatedRequirementRepository translatedRequirementRepository;
     private final UserRepository userRepository;
 
     @Transactional
@@ -73,13 +79,16 @@ public class DocumentService {
         return CreateDocumentResponse.of(document, version);
     }
 
-    public DocumentDetailResponse getDocumentVersion(Long userId, Long documentId, Integer versionNumber) {
+    public DocumentDetailResponse getDocumentVersion(Long userId, Long documentId,
+                                                      Integer versionNumber, String lang) {
         Document document = findDocument(documentId);
         verifyTeamMember(document.getTeamProject().getId(), userId);
 
         DocumentVersion documentVersion = documentVersionRepository
                 .findByDocument_IdAndVersion(documentId, versionNumber)
                 .orElseThrow(() -> new NotFoundException("해당 버전을 찾을 수 없습니다."));
+
+        Long translationLanguageId = resolveTranslationLanguageId(documentVersion.getId(), lang);
 
         List<Page> pages = pageRepository.findByDocumentVersion_IdOrderByPageNumberAsc(documentVersion.getId());
 
@@ -92,12 +101,7 @@ public class DocumentService {
                                 List<Requirement> requirements = requirementRepository.findByPin_Id(pin.getId());
 
                                 List<DocumentDetailResponse.RequirementInfo> reqInfos = requirements.stream()
-                                        .map(req -> new DocumentDetailResponse.RequirementInfo(
-                                                req.getId(),
-                                                req.getTabType(),
-                                                req.getItemName(),
-                                                req.getContent()
-                                        ))
+                                        .map(req -> buildRequirementInfo(req, translationLanguageId))
                                         .toList();
 
                                 return new DocumentDetailResponse.PinInfo(
@@ -146,6 +150,44 @@ public class DocumentService {
                 documentVersion.getCreatedAt(),
                 documentVersion.getUpdatedAt(),
                 pageInfos
+        );
+    }
+
+    private Long resolveTranslationLanguageId(Long documentVersionId, String lang) {
+        if (lang == null || lang.isBlank()) {
+            return null;
+        }
+        List<TranslationLanguage> completedLanguages =
+                translationLanguageRepository
+                        .findByTranslationJob_DocumentVersion_IdAndTargetLanguageAndStatus(
+                                documentVersionId, lang, "COMPLETED");
+        if (completedLanguages.isEmpty()) {
+            return null;
+        }
+        return completedLanguages.getLast().getId();
+    }
+
+    private DocumentDetailResponse.RequirementInfo buildRequirementInfo(
+            Requirement req, Long translationLanguageId) {
+        if (translationLanguageId != null) {
+            List<TranslatedRequirement> translated =
+                    translatedRequirementRepository.findByRequirement_IdAndTranslationLanguage_Id(
+                            req.getId(), translationLanguageId);
+            if (!translated.isEmpty()) {
+                TranslatedRequirement tr = translated.getFirst();
+                return new DocumentDetailResponse.RequirementInfo(
+                        req.getId(),
+                        req.getTabType(),
+                        tr.getTranslatedItemName(),
+                        tr.getTranslatedContent()
+                );
+            }
+        }
+        return new DocumentDetailResponse.RequirementInfo(
+                req.getId(),
+                req.getTabType(),
+                req.getItemName(),
+                req.getContent()
         );
     }
 

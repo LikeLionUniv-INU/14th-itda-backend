@@ -5,6 +5,8 @@ import com.itda.domain.dashboard.dto.response.DocumentListResponse;
 import com.itda.domain.dashboard.dto.response.ProjectListResponse;
 import com.itda.domain.dashboard.service.DashboardService;
 import com.itda.global.common.ApiResponse;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -12,6 +14,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+@Tag(name = "대시보드", description = "메인 대시보드 (홈/프로젝트/문서)")
 @RestController
 @RequestMapping("/api/dashboard")
 @RequiredArgsConstructor
@@ -19,6 +22,7 @@ public class DashboardController {
 
     private final DashboardService dashboardService;
 
+    @Operation(summary = "홈 탭 조회", description = "프로젝트 목록 + 최근 문서를 통합 조회합니다.")
     @GetMapping
     public ResponseEntity<ApiResponse<DashboardResponse>> getDashboard(Authentication authentication) {
         Long userId = (Long) authentication.getPrincipal();
@@ -26,6 +30,7 @@ public class DashboardController {
         return ResponseEntity.ok(ApiResponse.ok("대시보드 정보를 조회했습니다.", response));
     }
 
+    @Operation(summary = "프로젝트 탭 조회", description = "참여 중인 프로젝트 전체 목록을 조회합니다.")
     @GetMapping("/projects")
     public ResponseEntity<ApiResponse<ProjectListResponse>> getProjects(Authentication authentication) {
         Long userId = (Long) authentication.getPrincipal();
@@ -33,6 +38,7 @@ public class DashboardController {
         return ResponseEntity.ok(ApiResponse.ok("프로젝트 목록을 조회했습니다.", response));
     }
 
+    @Operation(summary = "문서 탭 조회", description = "참여 중인 프로젝트의 문서 전체 목록을 조회합니다.")
     @GetMapping("/documents")
     public ResponseEntity<ApiResponse<DocumentListResponse>> getDocuments(Authentication authentication) {
         Long userId = (Long) authentication.getPrincipal();

@@ -134,6 +134,96 @@
 
 ---
 
+## 6. 사용자 설정 기능 (User Settings)
+
+와이어프레임 설정 화면에 표시된 모든 기능을 구현했다.
+
+### 새 API 엔드포인트
+
+| Method | Endpoint | 설명 |
+|--------|----------|------|
+| PUT | `/api/users/me` | 프로필 수정 (이름, 국적, 언어, bio) |
+| POST | `/api/users/me/profile-image/presigned-url` | 프로필 이미지 업로드 URL 발급 |
+| PUT | `/api/users/me/profile-image` | 프로필 이미지 저장 |
+| DELETE | `/api/users/me/profile-image` | 프로필 이미지 삭제 |
+| PUT | `/api/users/me/password` | 비밀번호 변경 |
+| PUT | `/api/users/me/email` | 이메일 변경 |
+| DELETE | `/api/users/me` | 회원 탈퇴 |
+
+### 변경/생성 파일
+
+| 파일 | 변경 내용 |
+|------|----------|
+| `V5__user_settings.sql` | users 테이블에 bio, profile_image_url 추가 + 계정 삭제를 위한 FK ON DELETE 정책 변경 |
+| `User.java` | bio, profileImageUrl 필드 + updateProfile/Password/Email/ProfileImageUrl 메서드 |
+| `UserResponse.java` | bio, profileImageUrl 필드 추가 |
+| `UpdateProfileRequest.java` | 프로필 수정 요청 DTO |
+| `ChangePasswordRequest.java` | 비밀번호 변경 요청 DTO |
+| `ChangeEmailRequest.java` | 이메일 변경 요청 DTO |
+| `DeleteAccountRequest.java` | 회원 탈퇴 요청 DTO |
+| `ProfileImagePresignedUrlRequest.java` | 이미지 업로드 URL 요청 DTO |
+| `UpdateProfileImageRequest.java` | 이미지 URL 저장 요청 DTO |
+| `UserService.java` | 7개 신규 메서드 (프로필 수정, 이미지 관리, 비밀번호/이메일 변경, 회원 탈퇴) |
+| `UserController.java` | 7개 엔드포인트 추가 |
+
+### 계정 삭제 FK 처리 (V5 마이그레이션)
+
+| 테이블.컬럼 | ON DELETE 정책 | 결과 |
+|-------------|---------------|------|
+| `refresh_tokens.user_id` | CASCADE (기존) | 토큰 삭제 |
+| `team_members.user_id` | CASCADE (기존) | 멤버십 삭제 |
+| `change_confirmations.confirmed_by` | CASCADE (변경) | 확인 이력 삭제 |
+| `team_projects.created_by` | SET NULL (변경) | 프로젝트 유지, 작성자 null |
+| `documents.created_by` | SET NULL (변경) | 문서 유지, 작성자 null |
+| `document_versions.created_by` | SET NULL (변경) | 버전 유지, 작성자 null |
+| `activity_logs.performed_by` | SET NULL (변경) | 로그 유지, 수행자 null |
+| `document_changes.modified_by` | SET NULL (변경) | 변경사항 유지, 수정자 null |
+| `translation_languages.target_user_id` | SET NULL (변경) | 번역 유지, 대상자 null |
+
+### 핵심 로직
+
+- **비밀번호 변경**: 현재 비밀번호 BCrypt 검증 → 동일 비밀번호 차단 → 새 비밀번호 인코딩
+- **이메일 변경**: 비밀번호 확인 → 중복 체크 → 변경 → 리프레시 토큰 전체 삭제 (재로그인 강제)
+- **프로필 이미지**: 기존 S3 Presigned URL 패턴 재사용, 이미지 교체 시 기존 S3 파일 자동 삭제
+- **회원 탈퇴**: 비밀번호 확인 → S3 이미지 삭제 → DB CASCADE/SET NULL로 연관 데이터 처리
+
+### 검증
+
+- [x] 프로필 수정 (이름, 국적, 언어, bio) → 변경 반영 확인
+- [x] 비밀번호 변경 → 새 비밀번호로 로그인 성공
+- [x] 비밀번호 변경 → 틀린 현재 비밀번호 시 401
+- [x] 이메일 변경 → 새 이메일로 로그인 성공
+- [x] 이메일 중복 변경 시도 → "현재 이메일과 동일합니다" 400
+- [x] 프로필 이미지 삭제 (이미지 없을 때) → 정상 처리
+- [x] 회원 탈퇴 → 계정 삭제 후 로그인 불가 확인
+
+---
+
+## 7. 버전 복사 시 와이어프레임 이미지 누락 수정
+
+새 버전 생성(`createNewVersion`) 시 `copyVersionContent()`에서 페이지/핀/요구사항만 복사하고 와이어프레임 이미지를 복사하지 않던 버그를 수정했다.
+
+### 변경 파일
+
+| 파일 | 변경 내용 |
+|------|----------|
+| `DocumentService.java` | `copyVersionContent()`에 와이어프레임 이미지 복사 로직 추가 |
+
+### 동작
+
+- 새 버전 생성 시 기준 버전의 와이어프레임 이미지 DB 레코드를 새 페이지에 복사
+- S3의 실제 이미지 파일은 복사하지 않고 동일 URL을 참조 (저장 공간 효율)
+
+---
+
+## 8. 프론트엔드 API 가이드 업데이트
+
+- `GET /api/users/me` 응답에 `bio`, `profileImageUrl` 필드 추가 반영
+- "화면 10. 설정" 섹션 추가 (프로필 수정, 이미지 관리, 비밀번호/이메일 변경, 회원 탈퇴)
+- 부록 API 전체 목록에 7개 사용자 설정 엔드포인트 추가
+
+---
+
 ## DB 마이그레이션 이력
 
 | 버전 | 파일명 | 내용 |
@@ -142,11 +232,12 @@
 | V2 | `V2__add_original_id_to_requirements.sql` | 요구사항 originalId 추가 |
 | V3 | `V3__create_activity_logs.sql` | 활동 로그 테이블 |
 | V4 | `V4__create_change_tracking_tables.sql` | 수정사항 추적/확인 테이블 |
+| V5 | `V5__user_settings.sql` | 사용자 프로필 필드 추가 + FK ON DELETE 정책 변경 |
 
 ---
 
 ## 배포 확인
 
 - EC2 서버 (`3.35.208.88:8080`)에서 전체 기능 테스트 완료
-- Flyway V3, V4 마이그레이션 자동 적용 확인
-- 44개 엔드포인트 전체 정상 동작
+- Flyway V3, V4, V5 마이그레이션 자동 적용 확인
+- 51개 엔드포인트 전체 정상 동작 (기존 44개 + 사용자 설정 7개)

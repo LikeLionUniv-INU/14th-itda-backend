@@ -11,5 +11,7 @@ public record CreateRequirementRequest(
         String itemName,
 
         @Size(max = 200, message = "내용은 최대 200자입니다.")
-        String content
+        String content,
+
+        Boolean isRequired
 ) {}

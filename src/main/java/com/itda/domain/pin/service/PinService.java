@@ -45,6 +45,18 @@ public class PinService {
                 .build();
         pinRepository.save(pin);
 
+        String tab = (request.tabType() != null && !request.tabType().isBlank())
+                ? request.tabType() : "공통";
+
+        Requirement defaultReq = Requirement.builder()
+                .pin(pin)
+                .tabType(tab)
+                .itemName("")
+                .content("")
+                .isRequired(false)
+                .build();
+        requirementRepository.save(defaultReq);
+
         return PinResponse.from(pin);
     }
 
@@ -66,9 +78,18 @@ public class PinService {
         verifyLeader(page, userId);
 
         Pin pin = findPin(pinId);
+        int deletedPinNumber = pin.getPinNumber();
 
         requirementRepository.deleteByPin_Id(pinId);
         pinRepository.delete(pin);
+        pinRepository.flush();
+
+        List<Pin> remainingPins = pinRepository.findByPage_IdOrderByPinNumberAsc(pageId);
+        for (Pin p : remainingPins) {
+            if (p.getPinNumber() > deletedPinNumber) {
+                p.updatePinNumber(p.getPinNumber() - 1);
+            }
+        }
     }
 
     public List<PinDetailResponse> getPins(Long userId, Long pageId, String tabType) {
@@ -92,7 +113,8 @@ public class PinService {
                                     r.getId(),
                                     r.getTabType(),
                                     r.getItemName(),
-                                    r.getContent()
+                                    r.getContent(),
+                                    r.getIsRequired()
                             ))
                             .toList();
 

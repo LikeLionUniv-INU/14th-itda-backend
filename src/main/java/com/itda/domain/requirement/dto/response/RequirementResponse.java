@@ -9,6 +9,7 @@ public record RequirementResponse(
         String tabType,
         String itemName,
         String content,
+        boolean isRequired,
         LocalDateTime createdAt,
         LocalDateTime updatedAt
 ) {
@@ -18,6 +19,7 @@ public record RequirementResponse(
                 requirement.getTabType(),
                 requirement.getItemName(),
                 requirement.getContent(),
+                requirement.getIsRequired(),
                 requirement.getCreatedAt(),
                 requirement.getUpdatedAt()
         );

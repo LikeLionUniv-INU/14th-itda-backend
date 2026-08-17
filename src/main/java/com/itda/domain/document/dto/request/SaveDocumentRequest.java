@@ -24,6 +24,7 @@ public record SaveDocumentRequest(
     public record RequirementData(
             String tabType,
             String itemName,
-            String content
+            String content,
+            Boolean isRequired
     ) {}
 }

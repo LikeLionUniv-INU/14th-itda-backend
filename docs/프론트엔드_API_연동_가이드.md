@@ -248,6 +248,8 @@ GET /api/users/me
     "lastName": "Hong",
     "country": "KR",
     "language": "ko",
+    "bio": "언어의 경계를 넘어 더 나은 팀을 만듭니다.",
+    "profileImageUrl": "http://..../profiles/1/1723893600000.png",
     "initial": "H",
     "createdAt": "2026-08-17T03:50:40"
   }
@@ -255,6 +257,8 @@ GET /api/users/me
 ```
 
 - `initial`: 프로필 아바타에 표시할 이니셜 (lastName 첫 글자)
+- `bio`: 자기소개 (최대 500자, null 가능)
+- `profileImageUrl`: 프로필 이미지 URL (null이면 이니셜 아바타 표시)
 
 **에러:**
 
@@ -1257,6 +1261,171 @@ GET /api/documents/{documentId}/versions/{version}?lang=en
 
 ---
 
+## 화면 10. 설정
+
+### 진입 시 호출
+
+```
+GET /api/users/me    → 내 정보 전체 (이메일, 국적, 언어, bio, 프로필 이미지 등)
+```
+
+### 10-1. 프로필 수정
+
+```
+PUT /api/users/me
+```
+
+**요청:**
+
+```json
+{
+  "firstName": "Minjun",
+  "lastName": "Park",
+  "country": "대한민국",
+  "language": "English",
+  "bio": "언어의 경계를 넘어 더 나은 팀을 만듭니다."
+}
+```
+
+- `firstName`, `lastName`: 영문만 (a-z, A-Z), 필수
+- `bio`: 최대 500자, 생략 가능 (null 허용)
+
+**응답 (200):** 수정된 `UserResponse` 반환 (3-1과 동일 구조)
+
+**에러:**
+
+| 상태 | 메시지 | 상황 |
+|------|--------|------|
+| 400 | "이름은 영문자만 입력 가능합니다." | 한글 등 입력 |
+| 400 | "자기소개는 500자 이내로 입력해주세요." | 초과 |
+
+### 10-2. 프로필 이미지 변경
+
+**Step 1. Presigned URL 발급:**
+
+```
+POST /api/users/me/profile-image/presigned-url
+```
+
+```json
+{
+  "fileName": "profile.png",
+  "contentType": "image/png"
+}
+```
+
+**응답:**
+
+```json
+{
+  "data": {
+    "presignedUrl": "https://s3.../profiles/1/1723893600000.png?X-Amz-...",
+    "fileUrl": "http://..../profiles/1/1723893600000.png",
+    "key": "profiles/1/1723893600000.png"
+  }
+}
+```
+
+**Step 2. S3에 직접 업로드:**
+
+```javascript
+await fetch(presignedUrl, {
+  method: "PUT",
+  headers: { "Content-Type": "image/png" },
+  body: file,
+});
+```
+
+**Step 3. 이미지 URL 저장:**
+
+```
+PUT /api/users/me/profile-image
+```
+
+```json
+{
+  "profileImageUrl": "http://..../profiles/1/1723893600000.png"
+}
+```
+
+**응답 (200):** 수정된 `UserResponse` 반환
+
+> 기존 이미지가 있으면 S3에서 자동 삭제 후 교체됩니다.
+
+**이미지 삭제:**
+
+```
+DELETE /api/users/me/profile-image
+```
+
+### 10-3. 비밀번호 변경
+
+```
+PUT /api/users/me/password
+```
+
+```json
+{
+  "currentPassword": "test1234",
+  "newPassword": "newpass1234"
+}
+```
+
+- `newPassword`: 8~16자, 영문+숫자 조합
+
+**에러:**
+
+| 상태 | 메시지 | 상황 |
+|------|--------|------|
+| 401 | "현재 비밀번호가 일치하지 않습니다." | 비밀번호 틀림 |
+| 400 | "새 비밀번호는 현재 비밀번호와 다르게 설정해주세요." | 동일 비밀번호 |
+| 400 | "8~16자의 영문, 숫자 조합으로 입력해주세요." | 형식 불일치 |
+
+### 10-4. 이메일 변경
+
+```
+PUT /api/users/me/email
+```
+
+```json
+{
+  "password": "test1234",
+  "newEmail": "newemail@example.com"
+}
+```
+
+**에러:**
+
+| 상태 | 메시지 | 상황 |
+|------|--------|------|
+| 401 | "비밀번호가 일치하지 않습니다." | 비밀번호 틀림 |
+| 400 | "현재 이메일과 동일합니다." | 동일 이메일 |
+| 409 | "이미 사용 중인 이메일입니다." | 중복 |
+
+> 이메일 변경 시 기존 리프레시 토큰이 모두 삭제됩니다. 프론트에서 재로그인 처리가 필요합니다.
+
+### 10-5. 회원 탈퇴
+
+```
+DELETE /api/users/me
+```
+
+```json
+{
+  "password": "test1234"
+}
+```
+
+**에러:**
+
+| 상태 | 메시지 | 상황 |
+|------|--------|------|
+| 401 | "비밀번호가 일치하지 않습니다." | 비밀번호 틀림 |
+
+> 계정 삭제 시 팀 멤버십, 리프레시 토큰, 수정사항 확인 이력이 함께 삭제됩니다. 생성한 문서/프로젝트/활동 로그는 유지되며 작성자 정보만 null 처리됩니다.
+
+---
+
 ## 부록: API 전체 목록
 
 ### 인증 (토큰 불필요)
@@ -1272,6 +1441,13 @@ GET /api/documents/{documentId}/versions/{version}?lang=en
 | Method | Endpoint | 설명 |
 |--------|----------|------|
 | GET | `/api/users/me` | 내 정보 조회 |
+| PUT | `/api/users/me` | 프로필 수정 |
+| POST | `/api/users/me/profile-image/presigned-url` | 프로필 이미지 업로드 URL 발급 |
+| PUT | `/api/users/me/profile-image` | 프로필 이미지 저장 |
+| DELETE | `/api/users/me/profile-image` | 프로필 이미지 삭제 |
+| PUT | `/api/users/me/password` | 비밀번호 변경 |
+| PUT | `/api/users/me/email` | 이메일 변경 |
+| DELETE | `/api/users/me` | 회원 탈퇴 |
 
 ### 대시보드
 

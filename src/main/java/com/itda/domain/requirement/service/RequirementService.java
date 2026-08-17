@@ -35,6 +35,7 @@ public class RequirementService {
                 .tabType(request.tabType())
                 .itemName(request.itemName())
                 .content(request.content())
+                .isRequired(request.isRequired())
                 .build();
         requirementRepository.save(requirement);
 
@@ -54,7 +55,7 @@ public class RequirementService {
             throw new ValidationException("수정내용을 입력해주세요.");
         }
 
-        requirement.update(request.itemName(), request.content());
+        requirement.update(request.itemName(), request.content(), request.isRequired());
 
         return RequirementResponse.from(requirement);
     }

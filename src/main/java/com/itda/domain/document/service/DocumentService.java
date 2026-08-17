@@ -193,7 +193,8 @@ public class DocumentService {
                         req.getId(),
                         req.getTabType(),
                         tr.getTranslatedItemName(),
-                        tr.getTranslatedContent()
+                        tr.getTranslatedContent(),
+                        req.getIsRequired()
                 );
             }
         }
@@ -201,7 +202,8 @@ public class DocumentService {
                 req.getId(),
                 req.getTabType(),
                 req.getItemName(),
-                req.getContent()
+                req.getContent(),
+                req.getIsRequired()
         );
     }
 
@@ -353,6 +355,7 @@ public class DocumentService {
                             .tabType(reqData.tabType())
                             .itemName(reqData.itemName())
                             .content(reqData.content())
+                            .isRequired(reqData.isRequired())
                             .build();
                     requirementRepository.save(requirement);
                 }
@@ -406,6 +409,7 @@ public class DocumentService {
                             .tabType(sourceReq.getTabType())
                             .itemName(sourceReq.getItemName())
                             .content(sourceReq.getContent())
+                            .isRequired(sourceReq.getIsRequired())
                             .build();
                     requirementRepository.save(newReq);
                 }

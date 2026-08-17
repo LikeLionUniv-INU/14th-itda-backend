@@ -34,18 +34,25 @@ public class Requirement extends BaseTimeEntity {
     @Column(length = 200)
     private String content;
 
+    @Column(name = "is_required", nullable = false)
+    private Boolean isRequired;
+
     @Builder
     public Requirement(Pin pin, Long originalId, String tabType,
-                       String itemName, String content) {
+                       String itemName, String content, Boolean isRequired) {
         this.pin = pin;
         this.originalId = originalId;
         this.tabType = tabType;
         this.itemName = itemName;
         this.content = content;
+        this.isRequired = isRequired != null ? isRequired : false;
     }
 
-    public void update(String itemName, String content) {
+    public void update(String itemName, String content, Boolean isRequired) {
         this.itemName = itemName;
         this.content = content;
+        if (isRequired != null) {
+            this.isRequired = isRequired;
+        }
     }
 }

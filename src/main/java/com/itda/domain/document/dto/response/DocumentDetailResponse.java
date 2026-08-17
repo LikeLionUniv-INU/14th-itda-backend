@@ -47,6 +47,7 @@ public record DocumentDetailResponse(
             Long id,
             String tabType,
             String itemName,
-            String content
+            String content,
+            boolean isRequired
     ) {}
 }

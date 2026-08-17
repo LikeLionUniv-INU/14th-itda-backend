@@ -43,4 +43,8 @@ public class Pin extends BaseTimeEntity {
         this.xCoordinate = xCoordinate;
         this.yCoordinate = yCoordinate;
     }
+
+    public void updatePinNumber(Integer pinNumber) {
+        this.pinNumber = pinNumber;
+    }
 }

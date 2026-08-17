@@ -13,6 +13,7 @@ public record PinDetailResponse(
             Long id,
             String tabType,
             String itemName,
-            String content
+            String content,
+            boolean isRequired
     ) {}
 }

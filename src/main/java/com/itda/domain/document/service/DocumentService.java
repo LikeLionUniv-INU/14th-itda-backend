@@ -18,7 +18,9 @@ import com.itda.domain.pin.entity.Pin;
 import com.itda.domain.pin.repository.PinRepository;
 import com.itda.domain.requirement.entity.Requirement;
 import com.itda.domain.requirement.repository.RequirementRepository;
+import com.itda.domain.team.entity.ActivityLog;
 import com.itda.domain.team.entity.TeamMember;
+import com.itda.domain.team.repository.ActivityLogRepository;
 import com.itda.domain.team.repository.TeamMemberRepository;
 import com.itda.domain.translation.entity.TranslatedRequirement;
 import com.itda.domain.translation.entity.TranslationLanguage;
@@ -47,6 +49,7 @@ public class DocumentService {
     private final PinRepository pinRepository;
     private final RequirementRepository requirementRepository;
     private final TeamMemberRepository teamMemberRepository;
+    private final ActivityLogRepository activityLogRepository;
     private final TranslationLanguageRepository translationLanguageRepository;
     private final TranslatedRequirementRepository translatedRequirementRepository;
     private final UserRepository userRepository;
@@ -75,6 +78,16 @@ public class DocumentService {
                 .createdBy(user)
                 .build();
         documentVersionRepository.save(version);
+
+        activityLogRepository.save(ActivityLog.builder()
+                .teamProject(document.getTeamProject())
+                .document(document)
+                .actionType("UPLOADED")
+                .documentName(document.getName())
+                .documentType(document.getDocumentType())
+                .version(version.getVersion())
+                .performedBy(user)
+                .build());
 
         return CreateDocumentResponse.of(document, version);
     }
@@ -221,6 +234,16 @@ public class DocumentService {
 
         deleteVersionContent(documentVersion.getId());
         saveVersionContent(documentVersion, request.pages());
+
+        activityLogRepository.save(ActivityLog.builder()
+                .teamProject(document.getTeamProject())
+                .document(document)
+                .actionType("UPDATED")
+                .documentName(document.getName())
+                .documentType(document.getDocumentType())
+                .version(documentVersion.getVersion())
+                .performedBy(user)
+                .build());
     }
 
     @Transactional
@@ -265,6 +288,16 @@ public class DocumentService {
         documentVersionRepository.save(newVersion);
 
         copyVersionContent(baseVersion.getId(), newVersion);
+
+        activityLogRepository.save(ActivityLog.builder()
+                .teamProject(document.getTeamProject())
+                .document(document)
+                .actionType("UPLOADED")
+                .documentName(document.getName())
+                .documentType(document.getDocumentType())
+                .version(newVersionNumber)
+                .performedBy(user)
+                .build());
 
         return DocumentVersionResponse.from(newVersion);
     }

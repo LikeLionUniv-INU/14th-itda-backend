@@ -30,7 +30,7 @@
 **Response:**
 - `CreateTeamResponse` — id, name, defaultLanguage, inviteCode, createdBy, createdAt
 - `JoinTeamResponse` — teamProjectId, name, role, joinedAt
-- `TeamDetailResponse` — 팀 정보 + myRole + members + documents + memberLanguages
+- `TeamDetailResponse` — 팀 정보 + myRole + members + documents(documentType 포함) + memberLanguages + activityLogs
 - `InviteCodeResponse` — inviteCode
 
 ### 4. 권한 검증
@@ -49,3 +49,15 @@
 - [x] 팀 상세 조회 → 멤버 2명 확인
 - [x] 비멤버 팀 조회 → 403
 - [x] 대시보드 재검증 → 생성한 팀 프로젝트 표시 확인
+
+---
+
+## 추가 구현 (2026-08-17)
+
+### 활동 요약 (Activity Log)
+
+- `activity_logs` 테이블 추가 (Flyway V3)
+- `ActivityLog` 엔티티 — teamProject, document, actionType(UPLOADED/UPDATED), documentName, documentType, version, performedBy
+- 문서 생성/저장/새 버전 생성 시 자동 기록
+- `GET /api/teams/{teamId}` 응답에 `activityLogs` (최근 10개) 포함
+- `documents[]`에 `documentType` 필드 추가

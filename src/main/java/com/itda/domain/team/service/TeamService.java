@@ -7,8 +7,10 @@ import com.itda.domain.document.repository.DocumentVersionRepository;
 import com.itda.domain.team.dto.request.CreateTeamRequest;
 import com.itda.domain.team.dto.request.JoinTeamRequest;
 import com.itda.domain.team.dto.response.*;
+import com.itda.domain.team.entity.ActivityLog;
 import com.itda.domain.team.entity.TeamMember;
 import com.itda.domain.team.entity.TeamProject;
+import com.itda.domain.team.repository.ActivityLogRepository;
 import com.itda.domain.team.repository.TeamMemberRepository;
 import com.itda.domain.team.repository.TeamProjectRepository;
 import com.itda.domain.user.entity.User;
@@ -33,6 +35,7 @@ public class TeamService {
     private final UserRepository userRepository;
     private final DocumentRepository documentRepository;
     private final DocumentVersionRepository documentVersionRepository;
+    private final ActivityLogRepository activityLogRepository;
 
     private static final String INVITE_CODE_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     private static final int INVITE_CODE_LENGTH = 6;
@@ -125,6 +128,7 @@ public class TeamService {
                     return new TeamDetailResponse.TeamDocumentInfo(
                             doc.getId(),
                             doc.getName(),
+                            doc.getDocumentType(),
                             doc.getLanguage(),
                             latestVersion,
                             versionNumbers,
@@ -137,6 +141,23 @@ public class TeamService {
                 })
                 .toList();
 
+        List<ActivityLog> activityLogs = activityLogRepository
+                .findTop10ByTeamProject_IdOrderByCreatedAtDesc(teamId);
+
+        List<TeamDetailResponse.ActivityLogInfo> activityLogInfos = activityLogs.stream()
+                .map(log -> new TeamDetailResponse.ActivityLogInfo(
+                        log.getId(),
+                        log.getActionType(),
+                        log.getDocumentName(),
+                        log.getDocumentType(),
+                        log.getVersion(),
+                        log.getPerformedBy().getFirstName(),
+                        log.getPerformedBy().getLastName(),
+                        log.getPerformedBy().getLastName().substring(0, 1).toUpperCase(),
+                        log.getCreatedAt()
+                ))
+                .toList();
+
         return new TeamDetailResponse(
                 teamProject.getId(),
                 teamProject.getName(),
@@ -146,7 +167,8 @@ public class TeamService {
                 myMembership.getRole(),
                 memberInfos,
                 documentInfos,
-                memberLanguages
+                memberLanguages,
+                activityLogInfos
         );
     }
 

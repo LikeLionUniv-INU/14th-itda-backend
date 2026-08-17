@@ -5,6 +5,7 @@ import java.util.List;
 public record PinDetailResponse(
         Long id,
         int pinNumber,
+        String tabType,
         double xCoordinate,
         double yCoordinate,
         List<RequirementInfo> requirements

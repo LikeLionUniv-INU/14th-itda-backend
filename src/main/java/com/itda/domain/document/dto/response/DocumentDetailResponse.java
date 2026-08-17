@@ -38,6 +38,7 @@ public record DocumentDetailResponse(
     public record PinInfo(
             Long id,
             int pinNumber,
+            String tabType,
             double xCoordinate,
             double yCoordinate,
             List<RequirementInfo> requirements

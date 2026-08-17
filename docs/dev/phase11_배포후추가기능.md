@@ -323,6 +323,137 @@
 
 ---
 
+## 12. 팀 프로젝트 알림 기능
+
+문서 수정/새 버전 생성 시 같은 팀의 다른 팀원에게 알림을 제공하는 기능을 구현했다.
+페이지 진입 시 조회하는 폴링 방식으로 구현 (문서 수정은 빈도가 낮아 SSE/WebSocket 불필요).
+
+### 새 API 엔드포인트
+
+| Method | Endpoint | 설명 |
+|--------|----------|------|
+| GET | `/api/teams/{teamId}/notifications` | 안 읽은 알림 조회 (본인 수행 알림 제외) |
+| POST | `/api/teams/{teamId}/notifications/{notificationId}/read` | 알림 읽음 처리 (멱등) |
+
+### 변경/생성 파일
+
+| 파일 | 변경 내용 |
+|------|----------|
+| `V7__create_team_notifications.sql` | `team_notifications`, `team_notification_reads` 테이블 생성 |
+| `TeamNotification.java` | 엔티티 — teamProject, document, documentName, beforeVersion, afterVersion, performedBy |
+| `TeamNotificationRead.java` | 사용자별 읽음 추적 엔티티 (notification_id + user_id UNIQUE) |
+| `TeamNotificationRepository.java` | JPQL 커스텀 쿼리 — 안 읽은 알림 조회 (본인 수행 제외) |
+| `TeamNotificationReadRepository.java` | 읽음 여부 확인 |
+| `TeamNotificationResponse.java` | 응답 DTO |
+| `TeamService.java` | `getUnreadNotifications()`, `readNotification()` 추가 |
+| `TeamController.java` | 2개 엔드포인트 추가 |
+| `DocumentService.java` | `createNewVersion()`, `saveDocument()`에서 알림 생성 |
+
+### 핵심 로직
+
+- **알림 생성**: 문서 저장/새 버전 생성 시 `TeamNotification` 자동 생성
+- **자기 제외**: JPQL에서 `performedBy.id != :userId` 조건으로 본인 알림 제외
+- **읽음 처리**: `TeamNotificationRead` 엔티티로 사용자별 독립 추적, 이미 읽은 알림 재호출 시 무시 (멱등)
+
+### 검증
+
+- [x] 문서 저장 → 알림 생성 확인
+- [x] 새 버전 생성 → 알림 생성 확인
+- [x] 본인 알림 제외 확인 (LEADER가 수정 → LEADER 조회 시 빈 배열)
+- [x] 다른 팀원(MEMBER) 조회 시 알림 표시 확인
+- [x] 읽음 처리 후 알림 수 감소 확인
+- [x] 이미 읽은 알림 재호출 시 에러 없음 (멱등성)
+- [x] 존재하지 않는 알림 → 404
+- [x] 다른 팀의 알림 읽기 시도 → 403
+
+---
+
+## 13. AI 번역 안정성 강화
+
+OpenAI API 호출의 비결정적 특성에 대한 방어 로직을 전면 강화했다.
+
+### 변경 파일
+
+| 파일 | 변경 내용 |
+|------|----------|
+| `AiTranslationClient.java` | 전면 리팩터링 — 아래 6가지 개선 적용 |
+
+### 개선 내용
+
+| 항목 | 개선 전 | 개선 후 |
+|------|--------|--------|
+| JSON 보장 | 프롬프트로만 JSON 요청 | `response_format: json_schema` + `strict: true` (토큰 레벨 강제) |
+| 응답 잘림 감지 | 없음 | `finish_reason=length` 체크 → 재시도 |
+| 재시도 | 없음 (1회 실패 → 즉시 에러) | 3회 재시도 + 지수 백오프 (1s→2s→4s) |
+| 대량 처리 | 한 번에 전부 전송 | 30건씩 청크 분할 처리 |
+| ID 검증 | 없음 (AI 누락 시 데이터 유실) | 입력 ID 대조 → 누락분 원본 유지 |
+| 타임아웃 | 미설정 (무한 대기 가능) | 연결 10초, 읽기 60초 |
+
+### json_schema 구조
+
+```json
+{
+  "type": "json_schema",
+  "json_schema": {
+    "name": "translation_result",
+    "strict": true,
+    "schema": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "number" },
+              "itemName": { "type": "string" },
+              "content": { "type": "string" }
+            },
+            "required": ["id", "itemName", "content"],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": ["items"],
+      "additionalProperties": false
+    }
+  }
+}
+```
+
+- OpenAI가 토큰 생성 레벨에서 이 스키마를 강제하므로, 구조적으로 잘못된 JSON이 반환될 수 없음
+- `gpt-4o` 모델에서 지원
+
+### 방어 로직 흐름
+
+```
+1. 요구사항 30건 이상 → 청크 분할
+2. 각 청크별 OpenAI API 호출 (json_schema + strict)
+3. finish_reason 확인 (length면 재시도)
+4. JSON 파싱 → items 배열 추출
+5. 입력 ID와 결과 ID 대조 검증
+6. 누락된 ID → 원본 텍스트 유지 (경고 로그)
+7. 실패 시 → 지수 백오프 후 최대 3회 재시도
+```
+
+### 검증
+
+- [x] 기본 번역 (3개 요구사항, 한→영) — 3회 연속 COMPLETED
+- [x] 다중 언어 동시 번역 (영+일) — 2개 언어 모두 COMPLETED
+- [x] 대량 요구사항 (12개) — 전부 정확히 번역 (빈 원본은 빈 채 유지)
+- [x] ID 매핑 정합성 — 입력 ID와 출력 ID 일치 확인
+- [x] 일본어 번역 품질 — "ID入力", "パスワード入力" 등 정확
+
+---
+
+## 14. 프론트엔드 API 가이드 업데이트
+
+- 팀 알림 API 2개 섹션 추가 (알림 조회, 읽음 처리)
+- 부록 API 전체 목록에 알림 API 추가
+- 전수 API 테스트 (40+ 정상 케이스 + 44 에러 케이스 + 13개 응답 DTO 필드 검증) 완료
+
+---
+
 ## DB 마이그레이션 이력
 
 | 버전 | 파일명 | 내용 |
@@ -333,11 +464,13 @@
 | V4 | `V4__create_change_tracking_tables.sql` | 수정사항 추적/확인 테이블 |
 | V5 | `V5__user_settings.sql` | 사용자 프로필 필드 추가 + FK ON DELETE 정책 변경 |
 | V6 | `V6__add_requirement_is_required.sql` | 요구사항 필수 여부 필드 추가 |
+| V7 | `V7__create_team_notifications.sql` | 팀 알림/읽음 추적 테이블 |
 
 ---
 
 ## 배포 확인
 
 - EC2 서버 (`3.35.208.88:8080`)에서 전체 기능 테스트 완료
-- Flyway V3~V6 마이그레이션 자동 적용 확인
-- 51개 엔드포인트 전체 정상 동작 (기존 44개 + 사용자 설정 7개)
+- Flyway V3~V7 마이그레이션 자동 적용 확인
+- 53개 엔드포인트 전체 정상 동작 (기존 51개 + 알림 2개)
+- 전수 API 테스트: 정상 40+ 케이스, 에러 44건, 응답 DTO 13개 필드 구조 100% 일치 확인

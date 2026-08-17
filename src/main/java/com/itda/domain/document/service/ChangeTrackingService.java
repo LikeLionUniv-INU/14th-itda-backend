@@ -109,16 +109,17 @@ public class ChangeTrackingService {
     private void detectPinChanges(List<DocumentChange> changes, DocumentVersion dv,
                                    Page oldPage, SaveDocumentRequest.PageData newPage, User user) {
         List<Pin> oldPins = pinRepository.findByPage_IdOrderByPinNumberAsc(oldPage.getId());
-        Map<Integer, Pin> oldPinMap = oldPins.stream()
-                .collect(Collectors.toMap(Pin::getPinNumber, p -> p));
+        Map<String, Pin> oldPinMap = oldPins.stream()
+                .collect(Collectors.toMap(p -> p.getTabType() + ":" + p.getPinNumber(), p -> p));
 
         List<SaveDocumentRequest.PinData> newPins = newPage.pins() != null ? newPage.pins() : List.of();
-        Set<Integer> newPinNumbers = newPins.stream()
-                .map(SaveDocumentRequest.PinData::pinNumber)
+        Set<String> newPinKeys = newPins.stream()
+                .map(p -> (p.tabType() != null ? p.tabType() : "공통") + ":" + p.pinNumber())
                 .collect(Collectors.toSet());
 
         for (SaveDocumentRequest.PinData newPin : newPins) {
-            Pin oldPin = oldPinMap.get(newPin.pinNumber());
+            String pinKey = (newPin.tabType() != null ? newPin.tabType() : "공통") + ":" + newPin.pinNumber();
+            Pin oldPin = oldPinMap.get(pinKey);
 
             if (oldPin == null) {
                 // 새 핀의 모든 요구사항 = ADDED
@@ -170,7 +171,8 @@ public class ChangeTrackingService {
 
         // 삭제된 핀
         for (Pin oldPin : oldPins) {
-            if (!newPinNumbers.contains(oldPin.getPinNumber())) {
+            String oldPinKey = oldPin.getTabType() + ":" + oldPin.getPinNumber();
+            if (!newPinKeys.contains(oldPinKey)) {
                 List<Requirement> deletedReqs = requirementRepository.findByPin_Id(oldPin.getId());
                 for (Requirement or : deletedReqs) {
                     changes.add(buildReqChange(dv, "REQUIREMENT_DELETED", oldPage.getPageNumber(),

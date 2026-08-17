@@ -10,7 +10,8 @@
       "Bash(export TOKEN=\"eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiI1IiwiaWF0IjoxNzg2OTY0Mzc5LCJleHAiOjE3ODY5NjUyNzl9.S3wWtnxcFNIp-1TDT7vvfpjg3giE5CKqiXanbfmG-RQ3q8JxNFP64y-vR_uuIP-zyWaHTf5uE4dhkRv0BETPOA\")",
       "Bash(export REFRESH=\"eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiI1IiwiaWF0IjoxNzg2OTY0Mzc5LCJleHAiOjE3ODc1NjkxNzl9.iA4_JHIn6uIxpsfCWyNMtuBIFVgoCnZmK7GOG480j4EtZKAQ4K9sC7Tpzvrhr2OA2FadRmkRcJvT2tjWD3iiPA\")",
       "Bash(export BASE=\"http://3.35.208.88:8080\")",
-      "Bash(./gradlew build *)"
+      "Bash(./gradlew build *)",
+      "Bash(python3 -m json.tool)"
     ]
   }
 }

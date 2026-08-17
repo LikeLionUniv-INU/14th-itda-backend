@@ -16,6 +16,7 @@ public record SaveDocumentRequest(
 
     public record PinData(
             int pinNumber,
+            String tabType,
             double xCoordinate,
             double yCoordinate,
             List<RequirementData> requirements

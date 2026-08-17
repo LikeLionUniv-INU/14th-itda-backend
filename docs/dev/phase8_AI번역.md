@@ -20,8 +20,13 @@
 - OpenAI GPT API 연동 (RestClient 사용)
 - 시스템 프롬프트: 기술 문서 번역 맥락 설정
 - 요청: 요구사항 목록(JSON) → 번역된 결과(JSON) 반환
-- temperature 0.3으로 일관된 번역 품질 확보
-- 마크다운 코드블록 자동 제거 처리
+- `response_format: json_schema` + `strict: true`로 구조적 JSON 보장
+- temperature 0.1, max_tokens 4096 명시 설정
+- 3회 재시도 + 지수 백오프 (1s→2s→4s)
+- 30건 단위 청크 분할 (대량 요구사항 토큰 초과 방지)
+- `finish_reason=length` 감지 (응답 잘림 시 재시도)
+- 입력 ID 대조 검증 + 누락분 원본 유지 복구
+- 연결 타임아웃 10초, 읽기 타임아웃 60초
 
 ### 3. Redis Pub/Sub 설정
 

@@ -35,18 +35,19 @@ public class PinService {
         Page page = findPage(pageId);
         verifyLeader(page, userId);
 
-        int nextPinNumber = pinRepository.countByPage_Id(pageId) + 1;
+        String tab = (request.tabType() != null && !request.tabType().isBlank())
+                ? request.tabType() : "공통";
+
+        int nextPinNumber = pinRepository.countByPage_IdAndTabType(pageId, tab) + 1;
 
         Pin pin = Pin.builder()
                 .page(page)
                 .pinNumber(nextPinNumber)
                 .xCoordinate(request.xCoordinate())
                 .yCoordinate(request.yCoordinate())
+                .tabType(tab)
                 .build();
         pinRepository.save(pin);
-
-        String tab = (request.tabType() != null && !request.tabType().isBlank())
-                ? request.tabType() : "공통";
 
         Requirement defaultReq = Requirement.builder()
                 .pin(pin)
@@ -79,12 +80,13 @@ public class PinService {
 
         Pin pin = findPin(pinId);
         int deletedPinNumber = pin.getPinNumber();
+        String deletedTabType = pin.getTabType();
 
         requirementRepository.deleteByPin_Id(pinId);
         pinRepository.delete(pin);
         pinRepository.flush();
 
-        List<Pin> remainingPins = pinRepository.findByPage_IdOrderByPinNumberAsc(pageId);
+        List<Pin> remainingPins = pinRepository.findByPage_IdAndTabTypeOrderByPinNumberAsc(pageId, deletedTabType);
         for (Pin p : remainingPins) {
             if (p.getPinNumber() > deletedPinNumber) {
                 p.updatePinNumber(p.getPinNumber() - 1);
@@ -96,17 +98,13 @@ public class PinService {
         Page page = findPage(pageId);
         verifyTeamMember(page, userId);
 
-        List<Pin> pins = pinRepository.findByPage_IdOrderByPinNumberAsc(pageId);
+        List<Pin> pins = (tabType != null && !tabType.isBlank())
+                ? pinRepository.findByPage_IdAndTabTypeOrderByPinNumberAsc(pageId, tabType)
+                : pinRepository.findByPage_IdOrderByPinNumberAsc(pageId);
 
         return pins.stream()
                 .map(pin -> {
                     List<Requirement> requirements = requirementRepository.findByPin_Id(pin.getId());
-
-                    if (tabType != null && !tabType.isBlank()) {
-                        requirements = requirements.stream()
-                                .filter(r -> tabType.equals(r.getTabType()))
-                                .toList();
-                    }
 
                     List<PinDetailResponse.RequirementInfo> reqInfos = requirements.stream()
                             .map(r -> new PinDetailResponse.RequirementInfo(
@@ -121,6 +119,7 @@ public class PinService {
                     return new PinDetailResponse(
                             pin.getId(),
                             pin.getPinNumber(),
+                            pin.getTabType(),
                             pin.getXCoordinate(),
                             pin.getYCoordinate(),
                             reqInfos

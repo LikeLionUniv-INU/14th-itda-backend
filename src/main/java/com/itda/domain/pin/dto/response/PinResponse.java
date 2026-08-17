@@ -7,6 +7,7 @@ import java.time.LocalDateTime;
 public record PinResponse(
         Long id,
         int pinNumber,
+        String tabType,
         double xCoordinate,
         double yCoordinate,
         LocalDateTime createdAt,
@@ -16,6 +17,7 @@ public record PinResponse(
         return new PinResponse(
                 pin.getId(),
                 pin.getPinNumber(),
+                pin.getTabType(),
                 pin.getXCoordinate(),
                 pin.getYCoordinate(),
                 pin.getCreatedAt(),

@@ -124,6 +124,7 @@ public class DocumentService {
                                 return new DocumentDetailResponse.PinInfo(
                                         pin.getId(),
                                         pin.getPinNumber(),
+                                        pin.getTabType(),
                                         pin.getXCoordinate(),
                                         pin.getYCoordinate(),
                                         reqInfos
@@ -363,6 +364,7 @@ public class DocumentService {
                 Pin pin = Pin.builder()
                         .page(page)
                         .pinNumber(pinData.pinNumber())
+                        .tabType(pinData.tabType() != null ? pinData.tabType() : "공통")
                         .xCoordinate(pinData.xCoordinate())
                         .yCoordinate(pinData.yCoordinate())
                         .build();
@@ -416,6 +418,7 @@ public class DocumentService {
                 Pin newPin = Pin.builder()
                         .page(newPage)
                         .pinNumber(sourcePin.getPinNumber())
+                        .tabType(sourcePin.getTabType())
                         .xCoordinate(sourcePin.getXCoordinate())
                         .yCoordinate(sourcePin.getYCoordinate())
                         .build();

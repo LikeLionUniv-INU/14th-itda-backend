@@ -31,12 +31,16 @@ public class Pin extends BaseTimeEntity {
     @Column(name = "y_coordinate", nullable = false)
     private Double yCoordinate;
 
+    @Column(name = "tab_type", nullable = false, length = 20)
+    private String tabType;
+
     @Builder
-    public Pin(Page page, Integer pinNumber, Double xCoordinate, Double yCoordinate) {
+    public Pin(Page page, Integer pinNumber, Double xCoordinate, Double yCoordinate, String tabType) {
         this.page = page;
         this.pinNumber = pinNumber;
         this.xCoordinate = xCoordinate;
         this.yCoordinate = yCoordinate;
+        this.tabType = tabType;
     }
 
     public void updatePosition(Double xCoordinate, Double yCoordinate) {

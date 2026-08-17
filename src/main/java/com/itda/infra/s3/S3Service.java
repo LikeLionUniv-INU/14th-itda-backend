@@ -25,6 +25,9 @@ public class S3Service {
     @Value("${cloud.aws.s3.endpoint:}")
     private String endpoint;
 
+    @Value("${cloud.aws.s3.public-endpoint:}")
+    private String publicEndpoint;
+
     public String generatePresignedUploadUrl(String key, String contentType) {
         PutObjectRequest putObjectRequest = PutObjectRequest.builder()
                 .bucket(bucket)
@@ -38,12 +41,20 @@ public class S3Service {
                 .build();
 
         PresignedPutObjectRequest presignedRequest = s3Presigner.presignPutObject(presignRequest);
-        return presignedRequest.url().toString();
+        String url = presignedRequest.url().toString();
+
+        if (publicEndpoint != null && !publicEndpoint.isBlank()
+                && endpoint != null && !endpoint.isBlank()) {
+            url = url.replace(endpoint, publicEndpoint);
+        }
+        return url;
     }
 
     public String getFileUrl(String key) {
-        if (endpoint != null && !endpoint.isBlank()) {
-            return endpoint + "/" + bucket + "/" + key;
+        String effectiveEndpoint = (publicEndpoint != null && !publicEndpoint.isBlank())
+                ? publicEndpoint : endpoint;
+        if (effectiveEndpoint != null && !effectiveEndpoint.isBlank()) {
+            return effectiveEndpoint + "/" + bucket + "/" + key;
         }
         return "https://" + bucket + ".s3.amazonaws.com/" + key;
     }
@@ -56,6 +67,14 @@ public class S3Service {
     }
 
     public String extractKeyFromUrl(String url) {
+        // public-endpoint URL로 저장된 경우
+        if (publicEndpoint != null && !publicEndpoint.isBlank()) {
+            String prefix = publicEndpoint + "/" + bucket + "/";
+            if (url.startsWith(prefix)) {
+                return url.substring(prefix.length());
+            }
+        }
+        // 내부 endpoint URL로 저장된 경우
         if (endpoint != null && !endpoint.isBlank()) {
             String prefix = endpoint + "/" + bucket + "/";
             if (url.startsWith(prefix)) {

@@ -41,13 +41,7 @@ public class S3Service {
                 .build();
 
         PresignedPutObjectRequest presignedRequest = s3Presigner.presignPutObject(presignRequest);
-        String url = presignedRequest.url().toString();
-
-        if (publicEndpoint != null && !publicEndpoint.isBlank()
-                && endpoint != null && !endpoint.isBlank()) {
-            url = url.replace(endpoint, publicEndpoint);
-        }
-        return url;
+        return presignedRequest.url().toString();
     }
 
     public String getFileUrl(String key) {

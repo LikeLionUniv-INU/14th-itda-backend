@@ -48,7 +48,7 @@ public class DocumentChange {
     private String afterValue;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "modified_by", nullable = false)
+    @JoinColumn(name = "modified_by")
     private User modifiedBy;
 
     @CreatedDate

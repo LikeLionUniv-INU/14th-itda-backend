@@ -33,7 +33,7 @@ public class Document extends BaseTimeEntity {
     private String documentType;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "created_by", nullable = false)
+    @JoinColumn(name = "created_by")
     private User createdBy;
 
     @Builder

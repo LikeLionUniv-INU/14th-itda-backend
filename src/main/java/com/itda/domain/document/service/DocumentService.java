@@ -372,6 +372,20 @@ public class DocumentService {
                     .build();
             pageRepository.save(newPage);
 
+            List<WireframeImage> sourceImages = wireframeImageRepository.findByPage_Id(sourcePage.getId());
+            for (WireframeImage sourceImage : sourceImages) {
+                WireframeImage newImage = WireframeImage.builder()
+                        .page(newPage)
+                        .imageType(sourceImage.getImageType())
+                        .imageUrl(sourceImage.getImageUrl())
+                        .originalWidth(sourceImage.getOriginalWidth())
+                        .originalHeight(sourceImage.getOriginalHeight())
+                        .displayWidth(sourceImage.getDisplayWidth())
+                        .displayHeight(sourceImage.getDisplayHeight())
+                        .build();
+                wireframeImageRepository.save(newImage);
+            }
+
             List<Pin> sourcePins = pinRepository.findByPage_IdOrderByPinNumberAsc(sourcePage.getId());
 
             for (Pin sourcePin : sourcePins) {

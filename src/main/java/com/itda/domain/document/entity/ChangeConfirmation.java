@@ -28,7 +28,7 @@ public class ChangeConfirmation {
     private DocumentChange documentChange;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "confirmed_by", nullable = false)
+    @JoinColumn(name = "confirmed_by")
     private User confirmedBy;
 
     @CreatedDate

@@ -37,7 +37,7 @@ public class DocumentVersion extends BaseTimeEntity {
     private String changeSummary;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "created_by", nullable = false)
+    @JoinColumn(name = "created_by")
     private User createdBy;
 
     @Builder

@@ -35,6 +35,12 @@ public class User extends BaseTimeEntity {
     @Column(nullable = false, length = 20)
     private String language;
 
+    @Column(length = 500)
+    private String bio;
+
+    @Column(name = "profile_image_url", length = 500)
+    private String profileImageUrl;
+
     @Builder
     public User(String email, String password, String firstName, String lastName,
                 String country, String language) {
@@ -44,5 +50,26 @@ public class User extends BaseTimeEntity {
         this.lastName = lastName;
         this.country = country;
         this.language = language;
+    }
+
+    public void updateProfile(String firstName, String lastName, String country,
+                              String language, String bio) {
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.country = country;
+        this.language = language;
+        this.bio = bio;
+    }
+
+    public void updatePassword(String encodedPassword) {
+        this.password = encodedPassword;
+    }
+
+    public void updateEmail(String email) {
+        this.email = email;
+    }
+
+    public void updateProfileImageUrl(String profileImageUrl) {
+        this.profileImageUrl = profileImageUrl;
     }
 }

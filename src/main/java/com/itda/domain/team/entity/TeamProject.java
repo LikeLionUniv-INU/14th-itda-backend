@@ -28,7 +28,7 @@ public class TeamProject extends BaseTimeEntity {
     private String inviteCode;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "created_by", nullable = false)
+    @JoinColumn(name = "created_by")
     private User createdBy;
 
     @Builder

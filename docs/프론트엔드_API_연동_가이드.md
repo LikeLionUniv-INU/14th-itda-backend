@@ -983,6 +983,80 @@ POST /api/documents/{documentId}/versions/{version}/auto-save
 
 ---
 
+### 7-6. 수정사항 요약
+
+문서를 저장하면 이전 내용과 비교하여 변경사항이 자동 기록됩니다.
+
+**수정사항 목록 조회:**
+```
+GET /api/documents/{documentId}/versions/{version}/changes
+```
+
+응답:
+```json
+{
+  "data": {
+    "totalChanges": 3,
+    "confirmedByMe": 1,
+    "unconfirmedByMe": 2,
+    "changes": [
+      {
+        "id": 1,
+        "changeType": "REQUIREMENT_MODIFIED",
+        "pageNumber": 1,
+        "screenName": "회원가입",
+        "pinNumber": 1,
+        "itemDescription": "ID입력",
+        "beforeValue": "{\"tabType\":\"SCREEN\",\"itemName\":\"ID입력\",\"content\":\"이메일 형식 검증\"}",
+        "afterValue": "{\"tabType\":\"SCREEN\",\"itemName\":\"ID입력\",\"content\":\"이메일 형식 검증 및 중복 체크\"}",
+        "modifiedByFirstName": "Gildong",
+        "modifiedByLastName": "Hong",
+        "createdAt": "2026-08-17T04:00:00",
+        "confirmedByMe": false
+      },
+      {
+        "id": 2,
+        "changeType": "REQUIREMENT_ADDED",
+        "pageNumber": 1,
+        "screenName": "회원가입",
+        "pinNumber": 2,
+        "itemDescription": "비밀번호",
+        "beforeValue": null,
+        "afterValue": "{\"tabType\":\"SCREEN\",\"itemName\":\"비밀번호\",\"content\":\"8자 이상 영문+숫자\"}",
+        "modifiedByFirstName": "Gildong",
+        "modifiedByLastName": "Hong",
+        "createdAt": "2026-08-17T04:00:00",
+        "confirmedByMe": true
+      }
+    ]
+  }
+}
+```
+
+- `changeType`: `REQUIREMENT_ADDED`, `REQUIREMENT_MODIFIED`, `REQUIREMENT_DELETED`, `SCREEN_MODIFIED`
+- `beforeValue`/`afterValue`: JSON 문자열 (변경 전/후 데이터)
+- `confirmedByMe`: 내가 이 수정사항을 확인했는지 여부
+- 최초 저장 시 (기존 데이터 없음)에는 변경사항이 기록되지 않음
+
+**개별 수정사항 확인:**
+```
+POST /api/documents/{documentId}/versions/{version}/changes/{changeId}/confirm
+```
+
+**전체 수정사항 확인:**
+```
+POST /api/documents/{documentId}/versions/{version}/changes/confirm-all
+```
+
+**수정사항 에러:**
+
+| 상태 | 메시지 | 상황 |
+|------|--------|------|
+| 404 | "수정사항을 찾을 수 없습니다." | 잘못된 changeId |
+| 409 | "이미 확인한 수정사항입니다." | 이미 확인 처리된 수정사항 재확인 |
+
+---
+
 ## 화면 8. 버전 관리
 
 ### 버전 목록 조회
@@ -1227,6 +1301,9 @@ GET /api/documents/{documentId}/versions/{version}?lang=en
 | GET | `/api/documents/{id}/versions` | 버전 목록 |
 | POST | `/api/documents/{id}/versions` | 새 버전 생성 |
 | DELETE | `/api/documents/{id}/versions/{ver}` | 버전 삭제 |
+| GET | `/api/documents/{id}/versions/{ver}/changes` | 수정사항 목록 조회 |
+| POST | `/api/documents/{id}/versions/{ver}/changes/{changeId}/confirm` | 수정사항 개별 확인 |
+| POST | `/api/documents/{id}/versions/{ver}/changes/confirm-all` | 수정사항 전체 확인 |
 
 ### 페이지
 

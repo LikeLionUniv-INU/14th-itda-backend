@@ -3,9 +3,11 @@ package com.itda.domain.document.controller;
 import com.itda.domain.document.dto.request.CreateDocumentRequest;
 import com.itda.domain.document.dto.request.CreateVersionRequest;
 import com.itda.domain.document.dto.request.SaveDocumentRequest;
+import com.itda.domain.document.dto.response.ChangeSummaryResponse;
 import com.itda.domain.document.dto.response.CreateDocumentResponse;
 import com.itda.domain.document.dto.response.DocumentDetailResponse;
 import com.itda.domain.document.dto.response.DocumentVersionResponse;
+import com.itda.domain.document.service.ChangeTrackingService;
 import com.itda.domain.document.service.DocumentService;
 import com.itda.global.common.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -25,6 +27,7 @@ import java.util.List;
 public class DocumentController {
 
     private final DocumentService documentService;
+    private final ChangeTrackingService changeTrackingService;
 
     @Operation(summary = "문서 생성", description = "팀장이 새 문서를 생성합니다.")
     @PostMapping("/api/teams/{teamId}/documents")
@@ -107,5 +110,41 @@ public class DocumentController {
         Long userId = (Long) authentication.getPrincipal();
         documentService.deleteVersion(userId, documentId, version);
         return ResponseEntity.ok(ApiResponse.ok("버전이 삭제되었습니다.", null));
+    }
+
+    @Operation(summary = "수정사항 목록 조회", description = "해당 버전의 수정사항 요약과 확인 상태를 조회합니다.")
+    @GetMapping("/api/documents/{documentId}/versions/{version}/changes")
+    public ResponseEntity<ApiResponse<ChangeSummaryResponse>> getChanges(
+            Authentication authentication,
+            @PathVariable Long documentId,
+            @PathVariable Integer version) {
+        Long userId = (Long) authentication.getPrincipal();
+        Long versionId = documentService.getDocumentVersionId(userId, documentId, version);
+        ChangeSummaryResponse response = changeTrackingService.getChangeSummary(versionId, userId);
+        return ResponseEntity.ok(ApiResponse.ok("수정사항을 조회했습니다.", response));
+    }
+
+    @Operation(summary = "수정사항 확인", description = "개별 수정사항을 확인 처리합니다.")
+    @PostMapping("/api/documents/{documentId}/versions/{version}/changes/{changeId}/confirm")
+    public ResponseEntity<ApiResponse<Void>> confirmChange(
+            Authentication authentication,
+            @PathVariable Long documentId,
+            @PathVariable Integer version,
+            @PathVariable Long changeId) {
+        Long userId = (Long) authentication.getPrincipal();
+        changeTrackingService.confirmChange(changeId, userId);
+        return ResponseEntity.ok(ApiResponse.ok("수정사항을 확인했습니다.", null));
+    }
+
+    @Operation(summary = "수정사항 전체 확인", description = "해당 버전의 모든 수정사항을 확인 처리합니다.")
+    @PostMapping("/api/documents/{documentId}/versions/{version}/changes/confirm-all")
+    public ResponseEntity<ApiResponse<Void>> confirmAllChanges(
+            Authentication authentication,
+            @PathVariable Long documentId,
+            @PathVariable Integer version) {
+        Long userId = (Long) authentication.getPrincipal();
+        Long versionId = documentService.getDocumentVersionId(userId, documentId, version);
+        changeTrackingService.confirmAllChanges(versionId, userId);
+        return ResponseEntity.ok(ApiResponse.ok("모든 수정사항을 확인했습니다.", null));
     }
 }

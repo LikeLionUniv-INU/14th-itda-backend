@@ -50,6 +50,7 @@ public class DocumentService {
     private final RequirementRepository requirementRepository;
     private final TeamMemberRepository teamMemberRepository;
     private final ActivityLogRepository activityLogRepository;
+    private final ChangeTrackingService changeTrackingService;
     private final TranslationLanguageRepository translationLanguageRepository;
     private final TranslatedRequirementRepository translatedRequirementRepository;
     private final UserRepository userRepository;
@@ -231,6 +232,8 @@ public class DocumentService {
                 false,
                 request.changeSummary()
         );
+
+        changeTrackingService.detectAndRecordChanges(documentVersion, request.pages(), user);
 
         deleteVersionContent(documentVersion.getId());
         saveVersionContent(documentVersion, request.pages());
@@ -421,6 +424,17 @@ public class DocumentService {
         if (!teamMemberRepository.existsByTeamProject_IdAndUser_Id(teamId, userId)) {
             throw new ForbiddenException("해당 팀 프로젝트의 멤버가 아닙니다.");
         }
+    }
+
+    public Long getDocumentVersionId(Long userId, Long documentId, Integer versionNumber) {
+        Document document = findDocument(documentId);
+        verifyTeamMember(document.getTeamProject().getId(), userId);
+
+        DocumentVersion documentVersion = documentVersionRepository
+                .findByDocument_IdAndVersion(documentId, versionNumber)
+                .orElseThrow(() -> new NotFoundException("해당 버전을 찾을 수 없습니다."));
+
+        return documentVersion.getId();
     }
 
     private Document findDocument(Long documentId) {

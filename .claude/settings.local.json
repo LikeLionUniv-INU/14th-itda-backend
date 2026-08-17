@@ -5,7 +5,8 @@
       "Bash(bash gradlew *)",
       "Bash(grep *)",
       "Bash(curl -s -X POST http://3.35.208.88:8080/api/auth/login -H 'Content-Type: application/json' -d '{\"email\":\"test@example.com\",\"password\":\"test1234\"}')",
-      "Bash(curl *)"
+      "Bash(curl *)",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); t=d['data']['accessToken']; open\\('/tmp/token.txt','w'\\).write\\(t\\); print\\('TOKEN:', t[:30]+'...'\\)\")"
     ]
   }
 }

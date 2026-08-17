@@ -670,7 +670,8 @@ GET /api/documents/{documentId}/versions/{version}
                 "id": 1,
                 "tabType": "SCREEN",
                 "itemName": "이메일입력",
-                "content": "이메일 형식 검증 필요"
+                "content": "이메일 형식 검증 필요",
+                "isRequired": true
               }
             ]
           }
@@ -819,9 +820,12 @@ POST /api/pages/{pageId}/pins
 ```json
 {
   "xCoordinate": 150.5,   // 필수 (double)
-  "yCoordinate": 250.3    // 필수 (double)
+  "yCoordinate": 250.3,   // 필수 (double)
+  "tabType": "공통"        // 선택 — 현재 활성 탭 전달, 미전달 시 "공통"
 }
 ```
+
+- 핀 생성 시 전달된 `tabType` 탭에 빈 요구사항 1개가 자동 생성됩니다.
 
 응답:
 ```json
@@ -850,6 +854,7 @@ PUT /api/pages/{pageId}/pins/{pinId}
 DELETE /api/pages/{pageId}/pins/{pinId}
 ```
 - 연결된 요구사항도 모두 삭제
+- **삭제된 핀 번호 이후의 핀 번호가 자동으로 재정렬됩니다** (예: 1,2,3 중 2번 삭제 → 1,2)
 
 **핀 관리 에러:**
 
@@ -880,7 +885,8 @@ GET /api/pages/{pageId}/pins?tabType=SCREEN    // 탭 필터
           "id": 1,
           "tabType": "SCREEN",
           "itemName": "이메일입력",
-          "content": "이메일 형식 검증 필요"
+          "content": "이메일 형식 검증 필요",
+          "isRequired": true
         }
       ]
     }
@@ -902,7 +908,8 @@ POST /api/pins/{pinId}/requirements
 {
   "tabType": "SCREEN",         // 필수 (SCREEN, FUNCTION, DATA 등)
   "itemName": "이메일입력",    // 최대 10자
-  "content": "이메일 형식 검증 필요"  // 최대 200자
+  "content": "이메일 형식 검증 필요",  // 최대 200자
+  "isRequired": true           // 선택 (기본값 false)
 }
 ```
 
@@ -913,7 +920,8 @@ PUT /api/pins/{pinId}/requirements/{requirementId}
 ```json
 {
   "itemName": "이메일입력",
-  "content": "이메일 형식 검증 및 중복 체크 필요"
+  "content": "이메일 형식 검증 및 중복 체크 필요",
+  "isRequired": true           // 선택
 }
 ```
 
@@ -957,7 +965,8 @@ PUT /api/documents/{documentId}/versions/{version}
             {
               "tabType": "SCREEN",
               "itemName": "이메일입력",
-              "content": "이메일 형식 검증 필요"
+              "content": "이메일 형식 검증 필요",
+              "isRequired": true
             }
           ]
         }
@@ -1494,9 +1503,9 @@ DELETE /api/users/me
 
 | Method | Endpoint | 설명 |
 |--------|----------|------|
-| POST | `/api/pages/{pageId}/pins` | 핀 추가 |
+| POST | `/api/pages/{pageId}/pins` | 핀 추가 (빈 요구사항 자동 생성) |
 | PUT | `/api/pages/{pageId}/pins/{pinId}` | 핀 수정 |
-| DELETE | `/api/pages/{pageId}/pins/{pinId}` | 핀 삭제 |
+| DELETE | `/api/pages/{pageId}/pins/{pinId}` | 핀 삭제 (번호 자동 재정렬) |
 | GET | `/api/pages/{pageId}/pins` | 핀 목록 조회 |
 
 ### 요구사항

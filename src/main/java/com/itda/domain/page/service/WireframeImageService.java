@@ -1,5 +1,7 @@
 package com.itda.domain.page.service;
 
+import com.itda.domain.document.entity.DocumentChange;
+import com.itda.domain.document.repository.DocumentChangeRepository;
 import com.itda.domain.page.dto.request.CreateWireframeImageRequest;
 import com.itda.domain.page.dto.request.PresignedUrlRequest;
 import com.itda.domain.page.dto.request.UpdateWireframeImageRequest;
@@ -11,6 +13,8 @@ import com.itda.domain.page.repository.PageRepository;
 import com.itda.domain.page.repository.WireframeImageRepository;
 import com.itda.domain.team.entity.TeamMember;
 import com.itda.domain.team.repository.TeamMemberRepository;
+import com.itda.domain.user.entity.User;
+import com.itda.domain.user.repository.UserRepository;
 import com.itda.global.error.ForbiddenException;
 import com.itda.global.error.NotFoundException;
 import com.itda.infra.s3.S3Service;
@@ -26,6 +30,8 @@ public class WireframeImageService {
     private final WireframeImageRepository wireframeImageRepository;
     private final PageRepository pageRepository;
     private final TeamMemberRepository teamMemberRepository;
+    private final UserRepository userRepository;
+    private final DocumentChangeRepository documentChangeRepository;
     private final S3Service s3Service;
 
     public PresignedUrlResponse generatePresignedUrl(Long userId, PresignedUrlRequest request) {
@@ -65,6 +71,8 @@ public class WireframeImageService {
                 .build();
         wireframeImageRepository.save(image);
 
+        recordImageChange(page, "IMAGE_ADDED", null, request.imageUrl(), userId);
+
         return WireframeImageResponse.from(image);
     }
 
@@ -77,8 +85,10 @@ public class WireframeImageService {
         WireframeImage image = wireframeImageRepository.findById(imageId)
                 .orElseThrow(() -> new NotFoundException("이미지를 찾을 수 없습니다."));
 
+        String oldImageUrl = image.getImageUrl();
+
         // 기존 이미지 S3 삭제
-        String oldKey = s3Service.extractKeyFromUrl(image.getImageUrl());
+        String oldKey = s3Service.extractKeyFromUrl(oldImageUrl);
         s3Service.deleteFile(oldKey);
 
         image.update(
@@ -89,6 +99,8 @@ public class WireframeImageService {
                 request.displayWidth(),
                 request.displayHeight()
         );
+
+        recordImageChange(page, "IMAGE_MODIFIED", oldImageUrl, request.imageUrl(), userId);
 
         return WireframeImageResponse.from(image);
     }
@@ -101,10 +113,14 @@ public class WireframeImageService {
         WireframeImage image = wireframeImageRepository.findById(imageId)
                 .orElseThrow(() -> new NotFoundException("이미지를 찾을 수 없습니다."));
 
-        String key = s3Service.extractKeyFromUrl(image.getImageUrl());
+        String oldImageUrl = image.getImageUrl();
+
+        String key = s3Service.extractKeyFromUrl(oldImageUrl);
         s3Service.deleteFile(key);
 
         wireframeImageRepository.delete(image);
+
+        recordImageChange(page, "IMAGE_DELETED", oldImageUrl, null, userId);
     }
 
     private Page findPage(Long pageId) {
@@ -120,6 +136,30 @@ public class WireframeImageService {
         if (!"LEADER".equals(member.getRole())) {
             throw new ForbiddenException("팀장만 수행할 수 있는 작업입니다.");
         }
+    }
+
+    private void recordImageChange(Page page, String changeType,
+                                    String beforeUrl, String afterUrl, Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("사용자를 찾을 수 없습니다."));
+
+        String beforeValue = beforeUrl != null
+                ? String.format("{\"imageUrl\":\"%s\"}", beforeUrl) : null;
+        String afterValue = afterUrl != null
+                ? String.format("{\"imageUrl\":\"%s\"}", afterUrl) : null;
+
+        DocumentChange change = DocumentChange.builder()
+                .documentVersion(page.getDocumentVersion())
+                .changeType(changeType)
+                .pageNumber(page.getPageNumber())
+                .screenName(page.getScreenName())
+                .pinNumber(null)
+                .itemDescription("와이어프레임 이미지")
+                .beforeValue(beforeValue)
+                .afterValue(afterValue)
+                .modifiedBy(user)
+                .build();
+        documentChangeRepository.save(change);
     }
 
     private String extractExtension(String fileName) {

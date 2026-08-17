@@ -574,6 +574,62 @@ GET /api/teams/{teamId}/invite-code
 
 ---
 
+### 알림 조회 (팀 프로젝트 진입 시)
+
+팀 프로젝트 메인 화면 진입 시, 다른 팀원이 문서를 수정/저장한 알림을 조회합니다.
+본인이 수행한 작업의 알림은 제외됩니다.
+
+```
+GET /api/teams/{teamId}/notifications
+```
+
+**응답 (200):**
+
+```json
+{
+  "data": [
+    {
+      "id": 1,
+      "documentName": "스토리보드",
+      "beforeVersion": 1,
+      "afterVersion": 2,
+      "performedByFirstName": "John",
+      "performedByLastName": "Doe",
+      "createdAt": "2026-08-17T04:30:00"
+    }
+  ]
+}
+```
+
+- 빈 배열이면 새 알림 없음
+- `beforeVersion`과 `afterVersion`이 같으면 동일 버전 내 저장, 다르면 새 버전 생성
+
+**화면 동작:**
+- 팀 프로젝트 메인 진입 시 자동 조회
+- 알림이 있으면 상단에 배너/토스트 형태로 표시
+- 알림 확인 시 읽음 처리 API 호출
+
+---
+
+### 알림 읽음 처리
+
+```
+POST /api/teams/{teamId}/notifications/{notificationId}/read
+```
+
+- 이미 읽은 알림에 대해 재호출해도 에러 없이 정상 처리 (멱등성)
+- 응답: `{ "success": true, "message": "알림을 확인했습니다.", "data": null }`
+
+**에러:**
+
+| 상태 | 메시지 | 상황 |
+|------|--------|------|
+| 404 | "알림을 찾을 수 없습니다." | 잘못된 notificationId |
+| 403 | "해당 팀의 알림이 아닙니다." | teamId와 알림의 팀이 불일치 |
+| 403 | "해당 팀 프로젝트의 멤버가 아닙니다." | 팀원이 아닌데 접근 |
+
+---
+
 ### 문서 생성 (팀장만)
 
 ```
@@ -1500,6 +1556,8 @@ DELETE /api/users/me
 | POST | `/api/teams/join` | 팀 참여 |
 | GET | `/api/teams/{teamId}` | 팀 상세 조회 |
 | GET | `/api/teams/{teamId}/invite-code` | 초대코드 조회 |
+| GET | `/api/teams/{teamId}/notifications` | 안 읽은 알림 조회 |
+| POST | `/api/teams/{teamId}/notifications/{notificationId}/read` | 알림 읽음 처리 |
 
 ### 문서 관리
 

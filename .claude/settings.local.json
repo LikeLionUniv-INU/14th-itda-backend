@@ -6,7 +6,11 @@
       "Bash(grep *)",
       "Bash(curl -s -X POST http://3.35.208.88:8080/api/auth/login -H 'Content-Type: application/json' -d '{\"email\":\"test@example.com\",\"password\":\"test1234\"}')",
       "Bash(curl *)",
-      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); t=d['data']['accessToken']; open\\('/tmp/token.txt','w'\\).write\\(t\\); print\\('TOKEN:', t[:30]+'...'\\)\")"
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); t=d['data']['accessToken']; open\\('/tmp/token.txt','w'\\).write\\(t\\); print\\('TOKEN:', t[:30]+'...'\\)\")",
+      "Bash(export TOKEN=\"eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiI1IiwiaWF0IjoxNzg2OTY0Mzc5LCJleHAiOjE3ODY5NjUyNzl9.S3wWtnxcFNIp-1TDT7vvfpjg3giE5CKqiXanbfmG-RQ3q8JxNFP64y-vR_uuIP-zyWaHTf5uE4dhkRv0BETPOA\")",
+      "Bash(export REFRESH=\"eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiI1IiwiaWF0IjoxNzg2OTY0Mzc5LCJleHAiOjE3ODc1NjkxNzl9.iA4_JHIn6uIxpsfCWyNMtuBIFVgoCnZmK7GOG480j4EtZKAQ4K9sC7Tpzvrhr2OA2FadRmkRcJvT2tjWD3iiPA\")",
+      "Bash(export BASE=\"http://3.35.208.88:8080\")",
+      "Bash(./gradlew build *)"
     ]
   }
 }

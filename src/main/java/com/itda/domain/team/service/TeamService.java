@@ -7,11 +7,16 @@ import com.itda.domain.document.repository.DocumentVersionRepository;
 import com.itda.domain.team.dto.request.CreateTeamRequest;
 import com.itda.domain.team.dto.request.JoinTeamRequest;
 import com.itda.domain.team.dto.response.*;
+import com.itda.domain.team.dto.response.TeamNotificationResponse;
 import com.itda.domain.team.entity.ActivityLog;
 import com.itda.domain.team.entity.TeamMember;
+import com.itda.domain.team.entity.TeamNotification;
+import com.itda.domain.team.entity.TeamNotificationRead;
 import com.itda.domain.team.entity.TeamProject;
 import com.itda.domain.team.repository.ActivityLogRepository;
 import com.itda.domain.team.repository.TeamMemberRepository;
+import com.itda.domain.team.repository.TeamNotificationReadRepository;
+import com.itda.domain.team.repository.TeamNotificationRepository;
 import com.itda.domain.team.repository.TeamProjectRepository;
 import com.itda.domain.user.entity.User;
 import com.itda.domain.user.repository.UserRepository;
@@ -36,6 +41,8 @@ public class TeamService {
     private final DocumentRepository documentRepository;
     private final DocumentVersionRepository documentVersionRepository;
     private final ActivityLogRepository activityLogRepository;
+    private final TeamNotificationRepository teamNotificationRepository;
+    private final TeamNotificationReadRepository teamNotificationReadRepository;
 
     private static final String INVITE_CODE_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     private static final int INVITE_CODE_LENGTH = 6;
@@ -197,6 +204,45 @@ public class TeamService {
             sb.append(INVITE_CODE_CHARS.charAt(random.nextInt(INVITE_CODE_CHARS.length())));
         }
         return sb.toString();
+    }
+
+    public List<TeamNotificationResponse> getUnreadNotifications(Long userId, Long teamId) {
+        verifyTeamMember(teamId, userId);
+
+        List<TeamNotification> notifications = teamNotificationRepository
+                .findUnreadByTeamAndUser(teamId, userId);
+
+        return notifications.stream()
+                .map(TeamNotificationResponse::from)
+                .toList();
+    }
+
+    @Transactional
+    public void readNotification(Long userId, Long teamId, Long notificationId) {
+        verifyTeamMember(teamId, userId);
+
+        TeamNotification notification = teamNotificationRepository.findById(notificationId)
+                .orElseThrow(() -> new NotFoundException("알림을 찾을 수 없습니다."));
+
+        if (!notification.getTeamProject().getId().equals(teamId)) {
+            throw new ForbiddenException("해당 팀의 알림이 아닙니다.");
+        }
+
+        if (teamNotificationReadRepository.existsByNotification_IdAndUser_Id(notificationId, userId)) {
+            return;
+        }
+
+        User user = findUser(userId);
+        teamNotificationReadRepository.save(TeamNotificationRead.builder()
+                .notification(notification)
+                .user(user)
+                .build());
+    }
+
+    private void verifyTeamMember(Long teamId, Long userId) {
+        if (!teamMemberRepository.existsByTeamProject_IdAndUser_Id(teamId, userId)) {
+            throw new ForbiddenException("해당 팀 프로젝트의 멤버가 아닙니다.");
+        }
     }
 
     private User findUser(Long userId) {

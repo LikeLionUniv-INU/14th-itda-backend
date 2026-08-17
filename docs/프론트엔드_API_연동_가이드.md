@@ -999,6 +999,7 @@ POST /api/documents/{documentId}/versions/{version}/auto-save
 ### 7-6. 수정사항 요약
 
 문서를 저장하면 이전 내용과 비교하여 변경사항이 자동 기록됩니다.
+와이어프레임 이미지 등록/변경/삭제 시에도 변경사항이 자동 기록됩니다.
 
 **수정사항 목록 조회:**
 ```
@@ -1009,9 +1010,9 @@ GET /api/documents/{documentId}/versions/{version}/changes
 ```json
 {
   "data": {
-    "totalChanges": 3,
+    "totalChanges": 4,
     "confirmedByMe": 1,
-    "unconfirmedByMe": 2,
+    "unconfirmedByMe": 3,
     "changes": [
       {
         "id": 1,
@@ -1040,16 +1041,41 @@ GET /api/documents/{documentId}/versions/{version}/changes
         "modifiedByLastName": "Hong",
         "createdAt": "2026-08-17T04:00:00",
         "confirmedByMe": true
+      },
+      {
+        "id": 3,
+        "changeType": "IMAGE_MODIFIED",
+        "pageNumber": 1,
+        "screenName": "회원가입",
+        "pinNumber": null,
+        "itemDescription": "와이어프레임 이미지",
+        "beforeValue": "{\"imageUrl\":\"http://.../old_image.png\"}",
+        "afterValue": "{\"imageUrl\":\"http://.../new_image.png\"}",
+        "modifiedByFirstName": "Gildong",
+        "modifiedByLastName": "Hong",
+        "createdAt": "2026-08-17T04:05:00",
+        "confirmedByMe": false
       }
     ]
   }
 }
 ```
 
-- `changeType`: `REQUIREMENT_ADDED`, `REQUIREMENT_MODIFIED`, `REQUIREMENT_DELETED`, `SCREEN_MODIFIED`
-- `beforeValue`/`afterValue`: JSON 문자열 (변경 전/후 데이터)
+**changeType 종류:**
+
+| changeType | 설명 | beforeValue | afterValue |
+|------------|------|-------------|------------|
+| `REQUIREMENT_ADDED` | 요구사항 추가 | null | `{"tabType","itemName","content"}` |
+| `REQUIREMENT_MODIFIED` | 요구사항 수정 | 변경 전 JSON | 변경 후 JSON |
+| `REQUIREMENT_DELETED` | 요구사항 삭제 | 삭제된 JSON | null |
+| `SCREEN_MODIFIED` | 화면 이름/ID 변경 | 변경 전 JSON | 변경 후 JSON |
+| `IMAGE_ADDED` | 와이어프레임 이미지 등록 | null | `{"imageUrl":"..."}` |
+| `IMAGE_MODIFIED` | 와이어프레임 이미지 변경 | `{"imageUrl":"기존URL"}` | `{"imageUrl":"새URL"}` |
+| `IMAGE_DELETED` | 와이어프레임 이미지 삭제 | `{"imageUrl":"..."}` | null |
+
 - `confirmedByMe`: 내가 이 수정사항을 확인했는지 여부
 - 최초 저장 시 (기존 데이터 없음)에는 변경사항이 기록되지 않음
+- 이미지 변경 시 `beforeValue`/`afterValue`의 `imageUrl`로 before/after 이미지를 나란히 표시 가능
 
 **개별 수정사항 확인:**
 ```

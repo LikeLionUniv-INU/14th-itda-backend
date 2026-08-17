@@ -6,6 +6,7 @@ import com.itda.domain.team.dto.response.CreateTeamResponse;
 import com.itda.domain.team.dto.response.InviteCodeResponse;
 import com.itda.domain.team.dto.response.JoinTeamResponse;
 import com.itda.domain.team.dto.response.TeamDetailResponse;
+import com.itda.domain.team.dto.response.TeamNotificationResponse;
 import com.itda.domain.team.service.TeamService;
 import com.itda.global.common.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -16,6 +17,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @Tag(name = "팀 프로젝트", description = "팀 생성/참여/조회/초대코드")
 @RestController
@@ -65,5 +68,27 @@ public class TeamController {
         Long userId = (Long) authentication.getPrincipal();
         InviteCodeResponse response = teamService.getInviteCode(userId, teamId);
         return ResponseEntity.ok(ApiResponse.ok("초대 코드를 조회했습니다.", response));
+    }
+
+    @Operation(summary = "안 읽은 알림 조회",
+            description = "팀 프로젝트의 안 읽은 알림 목록을 조회합니다. 본인이 수행한 알림은 제외됩니다.")
+    @GetMapping("/{teamId}/notifications")
+    public ResponseEntity<ApiResponse<List<TeamNotificationResponse>>> getUnreadNotifications(
+            Authentication authentication,
+            @PathVariable Long teamId) {
+        Long userId = (Long) authentication.getPrincipal();
+        List<TeamNotificationResponse> response = teamService.getUnreadNotifications(userId, teamId);
+        return ResponseEntity.ok(ApiResponse.ok("알림을 조회했습니다.", response));
+    }
+
+    @Operation(summary = "알림 읽음 처리", description = "특정 알림을 읽음 처리합니다.")
+    @PostMapping("/{teamId}/notifications/{notificationId}/read")
+    public ResponseEntity<ApiResponse<Void>> readNotification(
+            Authentication authentication,
+            @PathVariable Long teamId,
+            @PathVariable Long notificationId) {
+        Long userId = (Long) authentication.getPrincipal();
+        teamService.readNotification(userId, teamId, notificationId);
+        return ResponseEntity.ok(ApiResponse.ok("알림을 확인했습니다.", null));
     }
 }

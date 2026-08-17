@@ -224,6 +224,105 @@
 
 ---
 
+## 9. 문서작성 기능 보완
+
+와이어프레임 요구사항 문서와 백엔드 코드를 대조하여 미구현 3가지 기능을 추가했다.
+
+### 9-1. 핀 삭제 시 자동 번호 재정렬
+
+핀 삭제 후 남은 핀들의 번호가 연속되지 않는 문제를 수정했다.
+
+| 파일 | 변경 내용 |
+|------|----------|
+| `Pin.java` | `updatePinNumber()` 메서드 추가 |
+| `PinService.java` | `deletePin()`에서 삭제 후 남은 핀 번호 재정렬 로직 추가 |
+
+**동작**: 핀 1,2,3,4에서 2번 삭제 → flush 후 남은 핀 3,4의 번호를 2,3으로 재정렬
+
+### 9-2. 요구사항 "필수 여부" 필드 추가
+
+와이어프레임에 표시된 "필수 여부" 컬럼을 지원하기 위해 `isRequired` 필드를 추가했다.
+
+| 파일 | 변경 내용 |
+|------|----------|
+| `V6__add_requirement_is_required.sql` | `requirements` 테이블에 `is_required BOOLEAN DEFAULT false` 추가 |
+| `Requirement.java` | `isRequired` 필드 + Builder/update 반영 |
+| `CreateRequirementRequest.java` | `isRequired` 파라미터 추가 |
+| `UpdateRequirementRequest.java` | `isRequired` 파라미터 추가 |
+| `RequirementResponse.java` | `isRequired` 필드 추가 |
+| `PinDetailResponse.java` | `RequirementInfo`에 `isRequired` 추가 |
+| `PinService.java` | `getPins()` 매핑 수정 |
+| `RequirementService.java` | create/update 시 `isRequired` 매핑 |
+| `SaveDocumentRequest.java` | `RequirementData`에 `isRequired` 추가 |
+| `DocumentDetailResponse.java` | `RequirementInfo`에 `isRequired` 추가 |
+| `DocumentService.java` | `saveVersionContent()`, `copyVersionContent()`, `buildRequirementInfo()` 매핑 |
+
+### 9-3. 핀 추가 시 요구사항 자동 생성
+
+핀 생성 시 프론트에서 전달한 현재 활성 탭에 빈 요구사항 1개가 자동 생성되도록 했다.
+
+| 파일 | 변경 내용 |
+|------|----------|
+| `CreatePinRequest.java` | `tabType` 파라미터 추가 (선택, 기본값 "공통") |
+| `PinService.java` | `createPin()`에서 빈 요구사항 자동 생성 |
+
+**동작**: `POST /api/pages/{pageId}/pins` 호출 시 `tabType` 전달 → 해당 탭에 빈 요구사항 생성. 미전달 시 "공통" 탭에 생성.
+
+### 검증
+
+- [x] 핀 3개 생성 → 2번 삭제 → 핀 목록 [1, 2] 정상 재정렬
+- [x] 핀 생성 (tabType="기획") → 기획 탭에 빈 요구사항 자동 생성
+- [x] 핀 생성 (tabType 미전달) → 공통 탭에 빈 요구사항 자동 생성
+- [x] 요구사항 생성 isRequired=true → 조회 시 반영 확인
+- [x] 문서 전체 저장 시 isRequired 포함 저장/조회 정상
+
+---
+
+## 10. 와이어프레임 이미지 변경 추적
+
+수정문서확인 화면의 before/after 이미지 비교 기능을 지원하기 위해, 와이어프레임 이미지 등록/변경/삭제 시 `DocumentChange`를 자동 기록하도록 했다.
+
+### 새 changeType
+
+| changeType | 설명 | beforeValue | afterValue |
+|------------|------|-------------|------------|
+| `IMAGE_ADDED` | 이미지 등록 | null | `{"imageUrl":"..."}` |
+| `IMAGE_MODIFIED` | 이미지 변경 | `{"imageUrl":"기존URL"}` | `{"imageUrl":"새URL"}` |
+| `IMAGE_DELETED` | 이미지 삭제 | `{"imageUrl":"..."}` | null |
+
+### 변경 파일
+
+| 파일 | 변경 내용 |
+|------|----------|
+| `WireframeImageService.java` | `DocumentChangeRepository`, `UserRepository` 의존성 추가. `createWireframeImage()`, `updateWireframeImage()`, `deleteWireframeImage()`에서 `recordImageChange()` 호출. 공통 헬퍼 메서드 `recordImageChange()` 추가 |
+
+### 동작
+
+- 이미지 등록 → `IMAGE_ADDED` 기록 (afterValue에 새 이미지 URL)
+- 이미지 변경 → `IMAGE_MODIFIED` 기록 (beforeValue에 기존 URL, afterValue에 새 URL)
+- 이미지 삭제 → `IMAGE_DELETED` 기록 (beforeValue에 삭제된 URL)
+- 기존 `GET .../changes` API로 이미지 변경사항도 함께 조회됨
+
+### 검증
+
+- [x] 이미지 등록 → IMAGE_ADDED 기록 확인
+- [x] 이미지 변경 → IMAGE_MODIFIED (before/after URL) 기록 확인
+- [x] 이미지 삭제 → IMAGE_DELETED 기록 확인
+- [x] 수정사항 목록 조회 시 이미지 변경사항 포함 확인
+
+---
+
+## 11. 프론트엔드 API 가이드 업데이트
+
+- 핀 추가 요청에 `tabType` 파라미터 및 빈 요구사항 자동 생성 설명 추가
+- 핀 삭제 시 번호 자동 재정렬 설명 추가
+- 요구사항 추가/수정 요청에 `isRequired` 파라미터 추가
+- 문서 상세 조회, 핀 목록 조회, 문서 전체 저장 응답/요청에 `isRequired` 필드 반영
+- 수정사항 요약 섹션에 `IMAGE_ADDED/MODIFIED/DELETED` changeType 및 응답 예시 추가
+- changeType 종류 테이블 신규 추가 (7가지 유형)
+
+---
+
 ## DB 마이그레이션 이력
 
 | 버전 | 파일명 | 내용 |
@@ -233,11 +332,12 @@
 | V3 | `V3__create_activity_logs.sql` | 활동 로그 테이블 |
 | V4 | `V4__create_change_tracking_tables.sql` | 수정사항 추적/확인 테이블 |
 | V5 | `V5__user_settings.sql` | 사용자 프로필 필드 추가 + FK ON DELETE 정책 변경 |
+| V6 | `V6__add_requirement_is_required.sql` | 요구사항 필수 여부 필드 추가 |
 
 ---
 
 ## 배포 확인
 
 - EC2 서버 (`3.35.208.88:8080`)에서 전체 기능 테스트 완료
-- Flyway V3, V4, V5 마이그레이션 자동 적용 확인
+- Flyway V3~V6 마이그레이션 자동 적용 확인
 - 51개 엔드포인트 전체 정상 동작 (기존 44개 + 사용자 설정 7개)

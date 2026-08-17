@@ -20,8 +20,10 @@ import com.itda.domain.requirement.entity.Requirement;
 import com.itda.domain.requirement.repository.RequirementRepository;
 import com.itda.domain.team.entity.ActivityLog;
 import com.itda.domain.team.entity.TeamMember;
+import com.itda.domain.team.entity.TeamNotification;
 import com.itda.domain.team.repository.ActivityLogRepository;
 import com.itda.domain.team.repository.TeamMemberRepository;
+import com.itda.domain.team.repository.TeamNotificationRepository;
 import com.itda.domain.translation.entity.TranslatedRequirement;
 import com.itda.domain.translation.entity.TranslationLanguage;
 import com.itda.domain.translation.repository.TranslatedRequirementRepository;
@@ -50,6 +52,7 @@ public class DocumentService {
     private final RequirementRepository requirementRepository;
     private final TeamMemberRepository teamMemberRepository;
     private final ActivityLogRepository activityLogRepository;
+    private final TeamNotificationRepository teamNotificationRepository;
     private final ChangeTrackingService changeTrackingService;
     private final TranslationLanguageRepository translationLanguageRepository;
     private final TranslatedRequirementRepository translatedRequirementRepository;
@@ -249,6 +252,15 @@ public class DocumentService {
                 .version(documentVersion.getVersion())
                 .performedBy(user)
                 .build());
+
+        teamNotificationRepository.save(TeamNotification.builder()
+                .teamProject(document.getTeamProject())
+                .document(document)
+                .documentName(document.getName())
+                .beforeVersion(documentVersion.getVersion())
+                .afterVersion(documentVersion.getVersion())
+                .performedBy(user)
+                .build());
     }
 
     @Transactional
@@ -301,6 +313,15 @@ public class DocumentService {
                 .documentName(document.getName())
                 .documentType(document.getDocumentType())
                 .version(newVersionNumber)
+                .performedBy(user)
+                .build());
+
+        teamNotificationRepository.save(TeamNotification.builder()
+                .teamProject(document.getTeamProject())
+                .document(document)
+                .documentName(document.getName())
+                .beforeVersion(request.baseVersion())
+                .afterVersion(newVersionNumber)
                 .performedBy(user)
                 .build());
 

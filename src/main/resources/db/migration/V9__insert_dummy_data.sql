@@ -45,7 +45,7 @@ SELECT setval('team_members_id_seq', GREATEST((SELECT MAX(id) FROM team_members)
 INSERT INTO documents (id, team_project_id, name, language, document_type, created_by, created_at, updated_at) VALUES
 (101, 101, '메인화면',    'ko', 'STORYBOARD', 101, NOW() - INTERVAL '6 days', NOW() - INTERVAL '1 day'),
 (102, 101, '로그인',      'ko', 'WIREFRAME',  101, NOW() - INTERVAL '5 days', NOW() - INTERVAL '2 days'),
-(103, 102, 'ProductPage', 'en', 'STORYBOARD', 102, NOW() - INTERVAL '4 days', NOW() - INTERVAL '1 day');
+(103, 102, 'Product', 'en', 'STORYBOARD', 102, NOW() - INTERVAL '4 days', NOW() - INTERVAL '1 day');
 
 SELECT setval('documents_id_seq', GREATEST((SELECT MAX(id) FROM documents), 103));
 
@@ -102,15 +102,15 @@ INSERT INTO pages (id, document_version_id, page_number, screen_name, screen_id,
 (117, 105, 3, '비번찾기',   'L-003', NOW() - INTERVAL '2 days', NOW() - INTERVAL '2 days'),
 (118, 105, 4, '소셜로그인', 'L-004', NOW() - INTERVAL '2 days', NOW() - INTERVAL '2 days');
 
--- Version 106 (ProductPage v1): 3 pages
+-- Version 106 (Product v1): 3 pages
 INSERT INTO pages (id, document_version_id, page_number, screen_name, screen_id, created_at, updated_at) VALUES
-(119, 106, 1, 'ProductList', 'P-001', NOW() - INTERVAL '4 days', NOW() - INTERVAL '4 days'),
+(119, 106, 1, 'ProdList', 'P-001', NOW() - INTERVAL '4 days', NOW() - INTERVAL '4 days'),
 (120, 106, 2, 'ProductDtl',  'P-002', NOW() - INTERVAL '4 days', NOW() - INTERVAL '4 days'),
 (121, 106, 3, 'Cart',        'P-003', NOW() - INTERVAL '4 days', NOW() - INTERVAL '4 days');
 
--- Version 107 (ProductPage v2): 5 pages
+-- Version 107 (Product v2): 5 pages
 INSERT INTO pages (id, document_version_id, page_number, screen_name, screen_id, created_at, updated_at) VALUES
-(122, 107, 1, 'ProductList', 'P-001', NOW() - INTERVAL '2 days', NOW() - INTERVAL '2 days'),
+(122, 107, 1, 'ProdList', 'P-001', NOW() - INTERVAL '2 days', NOW() - INTERVAL '2 days'),
 (123, 107, 2, 'ProductDtl',  'P-002', NOW() - INTERVAL '2 days', NOW() - INTERVAL '2 days'),
 (124, 107, 3, 'Cart',        'P-003', NOW() - INTERVAL '2 days', NOW() - INTERVAL '2 days'),
 (125, 107, 4, 'Reviews',     'P-004', NOW() - INTERVAL '2 days', NOW() - INTERVAL '2 days'),
@@ -149,13 +149,13 @@ INSERT INTO wireframe_images (id, page_id, image_type, image_url, original_width
 (114, 117, 'ORIGINAL', 'https://docbridge.cloud/storage/itda/wireframes/101/102/114/original_1723900006000.png', 1440, 900, 720, 450, NOW() - INTERVAL '2 days'),
 (115, 118, 'ORIGINAL', 'https://docbridge.cloud/storage/itda/wireframes/101/102/118/original_1723900007000.png', 1440, 900, 720, 450, NOW() - INTERVAL '2 days');
 
--- Version 106 (ProductPage v1) pages
+-- Version 106 (Product v1) pages
 INSERT INTO wireframe_images (id, page_id, image_type, image_url, original_width, original_height, display_width, display_height, created_at) VALUES
 (116, 119, 'ORIGINAL', 'https://docbridge.cloud/storage/itda/wireframes/102/103/119/original_1723900008000.png', 1920, 1080, 960, 540, NOW() - INTERVAL '4 days'),
 (117, 120, 'ORIGINAL', 'https://docbridge.cloud/storage/itda/wireframes/102/103/120/original_1723900009000.png', 1920, 1080, 960, 540, NOW() - INTERVAL '4 days'),
 (118, 121, 'ORIGINAL', 'https://docbridge.cloud/storage/itda/wireframes/102/103/121/original_1723900010000.png', 1920, 1080, 960, 540, NOW() - INTERVAL '4 days');
 
--- Version 107 (ProductPage v2) pages
+-- Version 107 (Product v2) pages
 INSERT INTO wireframe_images (id, page_id, image_type, image_url, original_width, original_height, display_width, display_height, created_at) VALUES
 (119, 122, 'ORIGINAL', 'https://docbridge.cloud/storage/itda/wireframes/102/103/119/original_1723900008000.png', 1920, 1080, 960, 540, NOW() - INTERVAL '2 days'),
 (120, 123, 'ORIGINAL', 'https://docbridge.cloud/storage/itda/wireframes/102/103/120/original_1723900009000.png', 1920, 1080, 960, 540, NOW() - INTERVAL '2 days'),
@@ -208,7 +208,7 @@ INSERT INTO pins (id, page_id, pin_number, x_coordinate, y_coordinate, tab_type,
 (118, 118, 1, 200.0, 150.0, '프론트엔드', NOW() - INTERVAL '2 days', NOW() - INTERVAL '2 days'),
 (119, 118, 2, 200.0, 300.0, '백엔드',     NOW() - INTERVAL '2 days', NOW() - INTERVAL '2 days');
 
--- Version 107 (ProductPage v2) - Page 122 (ProductList): 3 pins
+-- Version 107 (Product v2) - Page 122 (ProdList): 3 pins
 INSERT INTO pins (id, page_id, pin_number, x_coordinate, y_coordinate, tab_type, created_at, updated_at) VALUES
 (120, 122, 1, 100.0, 80.0,  '공통',       NOW() - INTERVAL '2 days', NOW() - INTERVAL '2 days'),
 (121, 122, 2, 300.0, 150.0, '디자인',     NOW() - INTERVAL '2 days', NOW() - INTERVAL '2 days'),
@@ -321,15 +321,15 @@ INSERT INTO requirements (id, pin_id, tab_type, item_name, content, is_required,
 INSERT INTO requirements (id, pin_id, tab_type, item_name, content, is_required, created_at, updated_at) VALUES
 (127, 119, '백엔드', 'OAuth콜백', 'GET /api/auth/callback/{provider} - OAuth 인증 후 JWT 발급', false, NOW() - INTERVAL '2 days', NOW() - INTERVAL '2 days');
 
--- Pin 120 (ProductList, 공통)
+-- Pin 120 (ProdList, 공통)
 INSERT INTO requirements (id, pin_id, tab_type, item_name, content, is_required, created_at, updated_at) VALUES
 (128, 120, '공통', 'Header',     'Top navigation bar with logo, search, and cart icon',        true,  NOW() - INTERVAL '2 days', NOW() - INTERVAL '2 days');
 
--- Pin 121 (ProductList, 디자인)
+-- Pin 121 (ProdList, 디자인)
 INSERT INTO requirements (id, pin_id, tab_type, item_name, content, is_required, created_at, updated_at) VALUES
 (129, 121, '디자인', 'Grid',       'Product cards in 3-column grid, image + name + price + rating', true, NOW() - INTERVAL '2 days', NOW() - INTERVAL '2 days');
 
--- Pin 122 (ProductList, 프론트엔드)
+-- Pin 122 (ProdList, 프론트엔드)
 INSERT INTO requirements (id, pin_id, tab_type, item_name, content, is_required, created_at, updated_at) VALUES
 (130, 122, '프론트엔드', 'Pagination', 'Client-side pagination with 20 items per page, page indicator', true, NOW() - INTERVAL '2 days', NOW() - INTERVAL '2 days');
 
@@ -442,9 +442,9 @@ INSERT INTO activity_logs (id, team_project_id, document_id, action_type, docume
 (105, 101, 101, 'UPDATED',  '메인화면',    'STORYBOARD', 2, 101, NOW() - INTERVAL '3 days'),
 (106, 101, 102, 'UPLOADED', '로그인',      'WIREFRAME',  2, 101, NOW() - INTERVAL '2 days'),
 (107, 101, 101, 'UPLOADED', '메인화면',    'STORYBOARD', 3, 101, NOW() - INTERVAL '1 day'),
-(108, 102, 103, 'UPLOADED', 'ProductPage', 'STORYBOARD', 1, 102, NOW() - INTERVAL '4 days'),
-(109, 102, 103, 'UPDATED',  'ProductPage', 'STORYBOARD', 1, 102, NOW() - INTERVAL '3 days'),
-(110, 102, 103, 'UPLOADED', 'ProductPage', 'STORYBOARD', 2, 102, NOW() - INTERVAL '2 days');
+(108, 102, 103, 'UPLOADED', 'Product', 'STORYBOARD', 1, 102, NOW() - INTERVAL '4 days'),
+(109, 102, 103, 'UPDATED',  'Product', 'STORYBOARD', 1, 102, NOW() - INTERVAL '3 days'),
+(110, 102, 103, 'UPLOADED', 'Product', 'STORYBOARD', 2, 102, NOW() - INTERVAL '2 days');
 
 SELECT setval('activity_logs_id_seq', GREATEST((SELECT MAX(id) FROM activity_logs), 110));
 
@@ -473,7 +473,7 @@ INSERT INTO team_notifications (id, team_project_id, document_id, document_name,
 (101, 101, 101, '메인화면', 1, 2, 101, NOW() - INTERVAL '4 days'),
 (102, 101, 101, '메인화면', NULL, 3, 101, NOW() - INTERVAL '1 day'),
 (103, 101, 102, '로그인',   1, 2, 101, NOW() - INTERVAL '2 days'),
-(104, 102, 103, 'ProductPage', 1, 2, 102, NOW() - INTERVAL '2 days');
+(104, 102, 103, 'Product', 1, 2, 102, NOW() - INTERVAL '2 days');
 
 SELECT setval('team_notifications_id_seq', GREATEST((SELECT MAX(id) FROM team_notifications), 104));
 

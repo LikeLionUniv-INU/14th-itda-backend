@@ -121,47 +121,47 @@ SELECT setval('pages_id_seq', GREATEST((SELECT MAX(id) FROM pages), 126));
 -- ============================================
 -- 6-1. Wireframe Images (placeholder images uploaded to MinIO)
 -- ============================================
--- URL pattern: http://3.35.208.88:9000/itda/wireframes/{projectId}/{docId}/{pageId}/{type}_{timestamp}.png
+-- URL pattern: https://docbridge.cloud/storage/itda/wireframes/{projectId}/{docId}/{pageId}/{type}_{timestamp}.png
 -- Version 102 (메인화면 v2) pages
 INSERT INTO wireframe_images (id, page_id, image_type, image_url, original_width, original_height, display_width, display_height, created_at) VALUES
-(101, 104, 'ORIGINAL', 'http://3.35.208.88:9000/itda/wireframes/101/101/104/original_1723900000000.png', 1920, 1080, 960, 540, NOW() - INTERVAL '4 days'),
-(102, 105, 'ORIGINAL', 'http://3.35.208.88:9000/itda/wireframes/101/101/105/original_1723900001000.png', 1920, 1080, 960, 540, NOW() - INTERVAL '4 days'),
-(103, 106, 'ORIGINAL', 'http://3.35.208.88:9000/itda/wireframes/101/101/106/original_1723900002000.png', 1920, 1080, 960, 540, NOW() - INTERVAL '4 days'),
-(104, 107, 'ORIGINAL', 'http://3.35.208.88:9000/itda/wireframes/101/101/107/original_1723900003000.png', 1920, 1080, 960, 540, NOW() - INTERVAL '4 days');
+(101, 104, 'ORIGINAL', 'https://docbridge.cloud/storage/itda/wireframes/101/101/104/original_1723900000000.png', 1920, 1080, 960, 540, NOW() - INTERVAL '4 days'),
+(102, 105, 'ORIGINAL', 'https://docbridge.cloud/storage/itda/wireframes/101/101/105/original_1723900001000.png', 1920, 1080, 960, 540, NOW() - INTERVAL '4 days'),
+(103, 106, 'ORIGINAL', 'https://docbridge.cloud/storage/itda/wireframes/101/101/106/original_1723900002000.png', 1920, 1080, 960, 540, NOW() - INTERVAL '4 days'),
+(104, 107, 'ORIGINAL', 'https://docbridge.cloud/storage/itda/wireframes/101/101/107/original_1723900003000.png', 1920, 1080, 960, 540, NOW() - INTERVAL '4 days');
 
 -- Version 103 (메인화면 v3 DRAFT) pages - copied from v2
 INSERT INTO wireframe_images (id, page_id, image_type, image_url, original_width, original_height, display_width, display_height, created_at) VALUES
-(105, 108, 'ORIGINAL', 'http://3.35.208.88:9000/itda/wireframes/101/101/104/original_1723900000000.png', 1920, 1080, 960, 540, NOW() - INTERVAL '1 day'),
-(106, 109, 'ORIGINAL', 'http://3.35.208.88:9000/itda/wireframes/101/101/105/original_1723900001000.png', 1920, 1080, 960, 540, NOW() - INTERVAL '1 day'),
-(107, 110, 'ORIGINAL', 'http://3.35.208.88:9000/itda/wireframes/101/101/106/original_1723900002000.png', 1920, 1080, 960, 540, NOW() - INTERVAL '1 day'),
-(108, 111, 'ORIGINAL', 'http://3.35.208.88:9000/itda/wireframes/101/101/107/original_1723900003000.png', 1920, 1080, 960, 540, NOW() - INTERVAL '1 day');
+(105, 108, 'ORIGINAL', 'https://docbridge.cloud/storage/itda/wireframes/101/101/104/original_1723900000000.png', 1920, 1080, 960, 540, NOW() - INTERVAL '1 day'),
+(106, 109, 'ORIGINAL', 'https://docbridge.cloud/storage/itda/wireframes/101/101/105/original_1723900001000.png', 1920, 1080, 960, 540, NOW() - INTERVAL '1 day'),
+(107, 110, 'ORIGINAL', 'https://docbridge.cloud/storage/itda/wireframes/101/101/106/original_1723900002000.png', 1920, 1080, 960, 540, NOW() - INTERVAL '1 day'),
+(108, 111, 'ORIGINAL', 'https://docbridge.cloud/storage/itda/wireframes/101/101/107/original_1723900003000.png', 1920, 1080, 960, 540, NOW() - INTERVAL '1 day');
 
 -- Version 104 (로그인 v1) pages
 INSERT INTO wireframe_images (id, page_id, image_type, image_url, original_width, original_height, display_width, display_height, created_at) VALUES
-(109, 112, 'ORIGINAL', 'http://3.35.208.88:9000/itda/wireframes/101/102/112/original_1723900004000.png', 1440, 900, 720, 450, NOW() - INTERVAL '5 days'),
-(110, 113, 'ORIGINAL', 'http://3.35.208.88:9000/itda/wireframes/101/102/113/original_1723900005000.png', 1440, 900, 720, 450, NOW() - INTERVAL '5 days'),
-(111, 114, 'ORIGINAL', 'http://3.35.208.88:9000/itda/wireframes/101/102/114/original_1723900006000.png', 1440, 900, 720, 450, NOW() - INTERVAL '5 days');
+(109, 112, 'ORIGINAL', 'https://docbridge.cloud/storage/itda/wireframes/101/102/112/original_1723900004000.png', 1440, 900, 720, 450, NOW() - INTERVAL '5 days'),
+(110, 113, 'ORIGINAL', 'https://docbridge.cloud/storage/itda/wireframes/101/102/113/original_1723900005000.png', 1440, 900, 720, 450, NOW() - INTERVAL '5 days'),
+(111, 114, 'ORIGINAL', 'https://docbridge.cloud/storage/itda/wireframes/101/102/114/original_1723900006000.png', 1440, 900, 720, 450, NOW() - INTERVAL '5 days');
 
 -- Version 105 (로그인 v2) pages
 INSERT INTO wireframe_images (id, page_id, image_type, image_url, original_width, original_height, display_width, display_height, created_at) VALUES
-(112, 115, 'ORIGINAL', 'http://3.35.208.88:9000/itda/wireframes/101/102/112/original_1723900004000.png', 1440, 900, 720, 450, NOW() - INTERVAL '2 days'),
-(113, 116, 'ORIGINAL', 'http://3.35.208.88:9000/itda/wireframes/101/102/113/original_1723900005000.png', 1440, 900, 720, 450, NOW() - INTERVAL '2 days'),
-(114, 117, 'ORIGINAL', 'http://3.35.208.88:9000/itda/wireframes/101/102/114/original_1723900006000.png', 1440, 900, 720, 450, NOW() - INTERVAL '2 days'),
-(115, 118, 'ORIGINAL', 'http://3.35.208.88:9000/itda/wireframes/101/102/118/original_1723900007000.png', 1440, 900, 720, 450, NOW() - INTERVAL '2 days');
+(112, 115, 'ORIGINAL', 'https://docbridge.cloud/storage/itda/wireframes/101/102/112/original_1723900004000.png', 1440, 900, 720, 450, NOW() - INTERVAL '2 days'),
+(113, 116, 'ORIGINAL', 'https://docbridge.cloud/storage/itda/wireframes/101/102/113/original_1723900005000.png', 1440, 900, 720, 450, NOW() - INTERVAL '2 days'),
+(114, 117, 'ORIGINAL', 'https://docbridge.cloud/storage/itda/wireframes/101/102/114/original_1723900006000.png', 1440, 900, 720, 450, NOW() - INTERVAL '2 days'),
+(115, 118, 'ORIGINAL', 'https://docbridge.cloud/storage/itda/wireframes/101/102/118/original_1723900007000.png', 1440, 900, 720, 450, NOW() - INTERVAL '2 days');
 
 -- Version 106 (ProductPage v1) pages
 INSERT INTO wireframe_images (id, page_id, image_type, image_url, original_width, original_height, display_width, display_height, created_at) VALUES
-(116, 119, 'ORIGINAL', 'http://3.35.208.88:9000/itda/wireframes/102/103/119/original_1723900008000.png', 1920, 1080, 960, 540, NOW() - INTERVAL '4 days'),
-(117, 120, 'ORIGINAL', 'http://3.35.208.88:9000/itda/wireframes/102/103/120/original_1723900009000.png', 1920, 1080, 960, 540, NOW() - INTERVAL '4 days'),
-(118, 121, 'ORIGINAL', 'http://3.35.208.88:9000/itda/wireframes/102/103/121/original_1723900010000.png', 1920, 1080, 960, 540, NOW() - INTERVAL '4 days');
+(116, 119, 'ORIGINAL', 'https://docbridge.cloud/storage/itda/wireframes/102/103/119/original_1723900008000.png', 1920, 1080, 960, 540, NOW() - INTERVAL '4 days'),
+(117, 120, 'ORIGINAL', 'https://docbridge.cloud/storage/itda/wireframes/102/103/120/original_1723900009000.png', 1920, 1080, 960, 540, NOW() - INTERVAL '4 days'),
+(118, 121, 'ORIGINAL', 'https://docbridge.cloud/storage/itda/wireframes/102/103/121/original_1723900010000.png', 1920, 1080, 960, 540, NOW() - INTERVAL '4 days');
 
 -- Version 107 (ProductPage v2) pages
 INSERT INTO wireframe_images (id, page_id, image_type, image_url, original_width, original_height, display_width, display_height, created_at) VALUES
-(119, 122, 'ORIGINAL', 'http://3.35.208.88:9000/itda/wireframes/102/103/119/original_1723900008000.png', 1920, 1080, 960, 540, NOW() - INTERVAL '2 days'),
-(120, 123, 'ORIGINAL', 'http://3.35.208.88:9000/itda/wireframes/102/103/120/original_1723900009000.png', 1920, 1080, 960, 540, NOW() - INTERVAL '2 days'),
-(121, 124, 'ORIGINAL', 'http://3.35.208.88:9000/itda/wireframes/102/103/121/original_1723900010000.png', 1920, 1080, 960, 540, NOW() - INTERVAL '2 days'),
-(122, 125, 'ORIGINAL', 'http://3.35.208.88:9000/itda/wireframes/102/103/125/original_1723900011000.png', 1920, 1080, 960, 540, NOW() - INTERVAL '2 days'),
-(123, 126, 'ORIGINAL', 'http://3.35.208.88:9000/itda/wireframes/102/103/126/original_1723900012000.png', 1920, 1080, 960, 540, NOW() - INTERVAL '2 days');
+(119, 122, 'ORIGINAL', 'https://docbridge.cloud/storage/itda/wireframes/102/103/119/original_1723900008000.png', 1920, 1080, 960, 540, NOW() - INTERVAL '2 days'),
+(120, 123, 'ORIGINAL', 'https://docbridge.cloud/storage/itda/wireframes/102/103/120/original_1723900009000.png', 1920, 1080, 960, 540, NOW() - INTERVAL '2 days'),
+(121, 124, 'ORIGINAL', 'https://docbridge.cloud/storage/itda/wireframes/102/103/121/original_1723900010000.png', 1920, 1080, 960, 540, NOW() - INTERVAL '2 days'),
+(122, 125, 'ORIGINAL', 'https://docbridge.cloud/storage/itda/wireframes/102/103/125/original_1723900011000.png', 1920, 1080, 960, 540, NOW() - INTERVAL '2 days'),
+(123, 126, 'ORIGINAL', 'https://docbridge.cloud/storage/itda/wireframes/102/103/126/original_1723900012000.png', 1920, 1080, 960, 540, NOW() - INTERVAL '2 days');
 
 SELECT setval('wireframe_images_id_seq', GREATEST((SELECT MAX(id) FROM wireframe_images), 123));
 

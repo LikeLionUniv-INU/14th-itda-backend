@@ -48,17 +48,16 @@ public class S3Config {
 
     @Bean
     public S3Presigner s3Presigner() {
-        String presignerEndpoint = (publicEndpoint != null && !publicEndpoint.isBlank())
-                ? publicEndpoint : endpoint;
-
+        // presigner는 항상 내부 endpoint(minio:9000)로 서명해야 함
+        // nginx가 /storage/ → minio:9000/ 으로 프록시할 때 경로가 일치하도록
         var builder = S3Presigner.builder()
                 .region(Region.of(region))
                 .credentialsProvider(StaticCredentialsProvider.create(
                         AwsBasicCredentials.create(accessKey, secretKey)
                 ));
 
-        if (presignerEndpoint != null && !presignerEndpoint.isBlank()) {
-            builder.endpointOverride(URI.create(presignerEndpoint))
+        if (endpoint != null && !endpoint.isBlank()) {
+            builder.endpointOverride(URI.create(endpoint))
                     .serviceConfiguration(S3Configuration.builder()
                             .pathStyleAccessEnabled(true)
                             .build());

@@ -41,7 +41,16 @@ public class S3Service {
                 .build();
 
         PresignedPutObjectRequest presignedRequest = s3Presigner.presignPutObject(presignRequest);
-        return presignedRequest.url().toString();
+        String url = presignedRequest.url().toString();
+
+        // 내부 endpoint(minio:9000)로 서명된 URL을 외부 접근 가능한 URL로 치환
+        // nginx가 /storage/ → minio:9000/ 프록시하므로 서명 경로(/bucket/key)는 그대로 유지됨
+        if (endpoint != null && !endpoint.isBlank()
+                && publicEndpoint != null && !publicEndpoint.isBlank()) {
+            url = url.replace(endpoint, publicEndpoint);
+        }
+
+        return url;
     }
 
     public String getFileUrl(String key) {

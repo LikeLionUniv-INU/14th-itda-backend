@@ -446,6 +446,10 @@ public class DocumentService {
         for (Page page : pages) {
             List<Pin> pins = pinRepository.findByPage_IdOrderByPinNumberAsc(page.getId());
             for (Pin pin : pins) {
+                List<Requirement> requirements = requirementRepository.findByPin_Id(pin.getId());
+                for (Requirement req : requirements) {
+                    translatedRequirementRepository.deleteByRequirement_Id(req.getId());
+                }
                 requirementRepository.deleteByPin_Id(pin.getId());
             }
             pinRepository.deleteByPage_Id(page.getId());

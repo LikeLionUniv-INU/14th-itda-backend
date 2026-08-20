@@ -274,14 +274,14 @@ public class ChangeTrackingService {
         if (lang == null || lang.isBlank()) {
             return Map.of();
         }
-        List<TranslationLanguage> completedLanguages =
-                translationLanguageRepository
-                        .findByTranslationJob_DocumentVersion_IdAndTargetLanguageAndStatus(
-                                documentVersionId, lang, "COMPLETED");
-        if (completedLanguages.isEmpty()) {
+        Long translationLanguageId = translationLanguageRepository
+                .findTopByTranslationJob_DocumentVersion_IdAndTargetLanguageAndStatusOrderByIdDesc(
+                        documentVersionId, lang, "COMPLETED")
+                .map(TranslationLanguage::getId)
+                .orElse(null);
+        if (translationLanguageId == null) {
             return Map.of();
         }
-        Long translationLanguageId = completedLanguages.getLast().getId();
         List<TranslatedRequirement> allTranslated =
                 translatedRequirementRepository.findByTranslationLanguage_Id(translationLanguageId);
         Map<Long, TranslatedRequirement> map = new HashMap<>();

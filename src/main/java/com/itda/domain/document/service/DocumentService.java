@@ -178,14 +178,11 @@ public class DocumentService {
         if (lang == null || lang.isBlank()) {
             return null;
         }
-        List<TranslationLanguage> completedLanguages =
-                translationLanguageRepository
-                        .findByTranslationJob_DocumentVersion_IdAndTargetLanguageAndStatus(
-                                documentVersionId, lang, "COMPLETED");
-        if (completedLanguages.isEmpty()) {
-            return null;
-        }
-        return completedLanguages.getLast().getId();
+        return translationLanguageRepository
+                .findTopByTranslationJob_DocumentVersion_IdAndTargetLanguageAndStatusOrderByIdDesc(
+                        documentVersionId, lang, "COMPLETED")
+                .map(TranslationLanguage::getId)
+                .orElse(null);
     }
 
     private DocumentDetailResponse.RequirementInfo buildRequirementInfo(

@@ -37,6 +37,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -244,8 +245,9 @@ public class DocumentService {
         changeTrackingService.detectAndRecordChanges(documentVersion, request.pages(), user);
 
         Map<Integer, List<WireframeImage>> imageBackup = backupWireframeImages(documentVersion.getId());
+        Map<String, List<TranslationBackupEntry>> translationBackup = backupTranslations(documentVersion.getId());
         deleteVersionContent(documentVersion.getId());
-        saveVersionContent(documentVersion, request.pages(), imageBackup);
+        saveVersionContent(documentVersion, request.pages(), imageBackup, translationBackup);
 
         activityLogRepository.save(ActivityLog.builder()
                 .teamProject(document.getTeamProject())
@@ -280,8 +282,9 @@ public class DocumentService {
         documentVersion.updateForSave("DRAFT", true, request.changeSummary());
 
         Map<Integer, List<WireframeImage>> imageBackup = backupWireframeImages(documentVersion.getId());
+        Map<String, List<TranslationBackupEntry>> translationBackup = backupTranslations(documentVersion.getId());
         deleteVersionContent(documentVersion.getId());
-        saveVersionContent(documentVersion, request.pages(), imageBackup);
+        saveVersionContent(documentVersion, request.pages(), imageBackup, translationBackup);
     }
 
     @Transactional
@@ -362,12 +365,49 @@ public class DocumentService {
         return backup;
     }
 
+    /**
+     * 번역 데이터 백업 - 삭제 전에 호출하여 번역을 보존
+     * key: pageNumber|pinNumber|tabType|itemName|content (원본 requirement 식별)
+     * value: 해당 requirement의 번역 정보 리스트 (언어ID, 번역항목명, 번역내용)
+     */
+    private record TranslationBackupEntry(Long translationLanguageId, String translatedItemName, String translatedContent) {}
+
+    private Map<String, List<TranslationBackupEntry>> backupTranslations(Long documentVersionId) {
+        Map<String, List<TranslationBackupEntry>> backup = new HashMap<>();
+        List<Page> pages = pageRepository.findByDocumentVersion_IdOrderByPageNumberAsc(documentVersionId);
+        for (Page page : pages) {
+            List<Pin> pins = pinRepository.findByPage_IdOrderByPinNumberAsc(page.getId());
+            for (Pin pin : pins) {
+                List<Requirement> requirements = requirementRepository.findByPin_Id(pin.getId());
+                for (Requirement req : requirements) {
+                    List<TranslatedRequirement> translations =
+                            translatedRequirementRepository.findByRequirement_Id(req.getId());
+                    if (!translations.isEmpty()) {
+                        String key = page.getPageNumber() + "|" + pin.getPinNumber() + "|"
+                                + req.getTabType() + "|" + req.getItemName() + "|" + req.getContent();
+                        List<TranslationBackupEntry> entries = backup.computeIfAbsent(key, k -> new ArrayList<>());
+                        for (TranslatedRequirement tr : translations) {
+                            // 삭제 전에 lazy 프록시가 아닌 실제 값을 추출하여 저장
+                            entries.add(new TranslationBackupEntry(
+                                    tr.getTranslationLanguage().getId(),
+                                    tr.getTranslatedItemName(),
+                                    tr.getTranslatedContent()
+                            ));
+                        }
+                    }
+                }
+            }
+        }
+        return backup;
+    }
+
     private void saveVersionContent(DocumentVersion documentVersion, List<SaveDocumentRequest.PageData> pagesData) {
-        saveVersionContent(documentVersion, pagesData, Map.of());
+        saveVersionContent(documentVersion, pagesData, Map.of(), Map.of());
     }
 
     private void saveVersionContent(DocumentVersion documentVersion, List<SaveDocumentRequest.PageData> pagesData,
-                                     Map<Integer, List<WireframeImage>> imageBackup) {
+                                     Map<Integer, List<WireframeImage>> imageBackup,
+                                     Map<String, List<TranslationBackupEntry>> translationBackup) {
         if (pagesData == null) return;
 
         for (SaveDocumentRequest.PageData pageData : pagesData) {
@@ -419,6 +459,26 @@ public class DocumentService {
                             .isRequired(reqData.isRequired())
                             .build();
                     requirementRepository.save(requirement);
+
+                    // 번역 데이터 복원
+                    String key = pageData.pageNumber() + "|" + pinData.pinNumber() + "|"
+                            + reqData.tabType() + "|" + reqData.itemName() + "|" + reqData.content();
+                    List<TranslationBackupEntry> backedUpTranslations = translationBackup.get(key);
+                    if (backedUpTranslations != null) {
+                        for (TranslationBackupEntry entry : backedUpTranslations) {
+                            TranslationLanguage tl = translationLanguageRepository.findById(entry.translationLanguageId())
+                                    .orElse(null);
+                            if (tl != null) {
+                                TranslatedRequirement newTr = TranslatedRequirement.builder()
+                                        .translationLanguage(tl)
+                                        .requirement(requirement)
+                                        .translatedItemName(entry.translatedItemName())
+                                        .translatedContent(entry.translatedContent())
+                                        .build();
+                                translatedRequirementRepository.save(newTr);
+                            }
+                        }
+                    }
                 }
             }
         }

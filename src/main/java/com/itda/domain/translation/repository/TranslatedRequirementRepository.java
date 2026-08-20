@@ -12,5 +12,7 @@ public interface TranslatedRequirementRepository extends JpaRepository<Translate
     List<TranslatedRequirement> findByRequirement_IdAndTranslationLanguage_Id(
             Long requirementId, Long translationLanguageId);
 
+    List<TranslatedRequirement> findByRequirement_Id(Long requirementId);
+
     void deleteByRequirement_Id(Long requirementId);
 }

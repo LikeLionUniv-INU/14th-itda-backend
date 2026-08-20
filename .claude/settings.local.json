@@ -12,7 +12,8 @@
       "Bash(export BASE=\"http://3.35.208.88:8080\")",
       "Bash(./gradlew build *)",
       "Bash(python3 -m json.tool)",
-      "Read(//tmp/14th-itda-frontend/**)"
+      "Read(//tmp/14th-itda-frontend/**)",
+      "Bash(python3 -c ' *)"
     ]
   }
 }

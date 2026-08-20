@@ -37,7 +37,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -241,8 +243,9 @@ public class DocumentService {
 
         changeTrackingService.detectAndRecordChanges(documentVersion, request.pages(), user);
 
+        Map<Integer, List<WireframeImage>> imageBackup = backupWireframeImages(documentVersion.getId());
         deleteVersionContent(documentVersion.getId());
-        saveVersionContent(documentVersion, request.pages());
+        saveVersionContent(documentVersion, request.pages(), imageBackup);
 
         activityLogRepository.save(ActivityLog.builder()
                 .teamProject(document.getTeamProject())
@@ -276,8 +279,9 @@ public class DocumentService {
 
         documentVersion.updateForSave("DRAFT", true, request.changeSummary());
 
+        Map<Integer, List<WireframeImage>> imageBackup = backupWireframeImages(documentVersion.getId());
         deleteVersionContent(documentVersion.getId());
-        saveVersionContent(documentVersion, request.pages());
+        saveVersionContent(documentVersion, request.pages(), imageBackup);
     }
 
     @Transactional
@@ -346,7 +350,24 @@ public class DocumentService {
         documentVersionRepository.delete(documentVersion);
     }
 
+    private Map<Integer, List<WireframeImage>> backupWireframeImages(Long documentVersionId) {
+        Map<Integer, List<WireframeImage>> backup = new HashMap<>();
+        List<Page> pages = pageRepository.findByDocumentVersion_IdOrderByPageNumberAsc(documentVersionId);
+        for (Page page : pages) {
+            List<WireframeImage> images = wireframeImageRepository.findByPage_Id(page.getId());
+            if (!images.isEmpty()) {
+                backup.put(page.getPageNumber(), images);
+            }
+        }
+        return backup;
+    }
+
     private void saveVersionContent(DocumentVersion documentVersion, List<SaveDocumentRequest.PageData> pagesData) {
+        saveVersionContent(documentVersion, pagesData, Map.of());
+    }
+
+    private void saveVersionContent(DocumentVersion documentVersion, List<SaveDocumentRequest.PageData> pagesData,
+                                     Map<Integer, List<WireframeImage>> imageBackup) {
         if (pagesData == null) return;
 
         for (SaveDocumentRequest.PageData pageData : pagesData) {
@@ -357,6 +378,23 @@ public class DocumentService {
                     .screenId(pageData.screenId())
                     .build();
             pageRepository.save(page);
+
+            // 와이어프레임 이미지 복원
+            List<WireframeImage> backedUpImages = imageBackup.get(pageData.pageNumber());
+            if (backedUpImages != null) {
+                for (WireframeImage srcImg : backedUpImages) {
+                    WireframeImage newImg = WireframeImage.builder()
+                            .page(page)
+                            .imageType(srcImg.getImageType())
+                            .imageUrl(srcImg.getImageUrl())
+                            .originalWidth(srcImg.getOriginalWidth())
+                            .originalHeight(srcImg.getOriginalHeight())
+                            .displayWidth(srcImg.getDisplayWidth())
+                            .displayHeight(srcImg.getDisplayHeight())
+                            .build();
+                    wireframeImageRepository.save(newImg);
+                }
+            }
 
             if (pageData.pins() == null) continue;
 

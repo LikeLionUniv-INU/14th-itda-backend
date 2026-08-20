@@ -491,6 +491,7 @@ public class DocumentService {
                 requirementRepository.deleteByPin_Id(pin.getId());
             }
             pinRepository.deleteByPage_Id(page.getId());
+            wireframeImageRepository.deleteByPage_Id(page.getId());
         }
         pageRepository.deleteByDocumentVersion_Id(documentVersionId);
     }

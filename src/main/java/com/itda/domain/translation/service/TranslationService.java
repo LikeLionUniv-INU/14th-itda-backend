@@ -19,6 +19,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -70,9 +72,16 @@ public class TranslationService {
             languages.add(tl);
         }
 
-        // 별도 빈(TranslationAsyncExecutor)을 통해 호출해야 @Async 프록시가 동작함
-        translationAsyncExecutor.executeTranslation(job.getId(), documentVersion.getId(),
-                document.getLanguage());
+        // 트랜잭션 커밋 후에 @Async 실행 — 커밋 전에 실행하면 DB에서 job을 못 찾음
+        Long jobId = job.getId();
+        Long dvId = documentVersion.getId();
+        String lang = document.getLanguage();
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                translationAsyncExecutor.executeTranslation(jobId, dvId, lang);
+            }
+        });
 
         return TranslationJobResponse.from(job, languages);
     }

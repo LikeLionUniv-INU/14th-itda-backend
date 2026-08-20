@@ -112,15 +112,16 @@ public class DocumentController {
         return ResponseEntity.ok(ApiResponse.ok("버전이 삭제되었습니다.", null));
     }
 
-    @Operation(summary = "수정사항 목록 조회", description = "해당 버전의 수정사항 요약과 확인 상태를 조회합니다.")
+    @Operation(summary = "수정사항 목록 조회", description = "해당 버전의 수정사항 요약과 확인 상태를 조회합니다. lang 파라미터로 번역된 내용을 조회할 수 있습니다.")
     @GetMapping("/api/documents/{documentId}/versions/{version}/changes")
     public ResponseEntity<ApiResponse<ChangeSummaryResponse>> getChanges(
             Authentication authentication,
             @PathVariable Long documentId,
-            @PathVariable Integer version) {
+            @PathVariable Integer version,
+            @RequestParam(required = false) String lang) {
         Long userId = (Long) authentication.getPrincipal();
         Long versionId = documentService.getDocumentVersionId(userId, documentId, version);
-        ChangeSummaryResponse response = changeTrackingService.getChangeSummary(versionId, userId);
+        ChangeSummaryResponse response = changeTrackingService.getChangeSummary(versionId, userId, lang);
         return ResponseEntity.ok(ApiResponse.ok("수정사항을 조회했습니다.", response));
     }
 

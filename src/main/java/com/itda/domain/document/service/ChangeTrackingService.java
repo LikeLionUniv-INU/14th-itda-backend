@@ -13,6 +13,10 @@ import com.itda.domain.pin.entity.Pin;
 import com.itda.domain.pin.repository.PinRepository;
 import com.itda.domain.requirement.entity.Requirement;
 import com.itda.domain.requirement.repository.RequirementRepository;
+import com.itda.domain.translation.entity.TranslatedRequirement;
+import com.itda.domain.translation.entity.TranslationLanguage;
+import com.itda.domain.translation.repository.TranslatedRequirementRepository;
+import com.itda.domain.translation.repository.TranslationLanguageRepository;
 import com.itda.domain.user.entity.User;
 import com.itda.domain.user.repository.UserRepository;
 import com.itda.global.error.DuplicateException;
@@ -33,6 +37,8 @@ public class ChangeTrackingService {
     private final PageRepository pageRepository;
     private final PinRepository pinRepository;
     private final RequirementRepository requirementRepository;
+    private final TranslatedRequirementRepository translatedRequirementRepository;
+    private final TranslationLanguageRepository translationLanguageRepository;
     private final UserRepository userRepository;
 
     @Transactional
@@ -228,7 +234,7 @@ public class ChangeTrackingService {
     // --- 조회 ---
 
     @Transactional(readOnly = true)
-    public ChangeSummaryResponse getChangeSummary(Long documentVersionId, Long userId) {
+    public ChangeSummaryResponse getChangeSummary(Long documentVersionId, Long userId, String lang) {
         List<DocumentChange> changes = documentChangeRepository
                 .findByDocumentVersion_IdOrderByPageNumberAscPinNumberAsc(documentVersionId);
 
@@ -238,6 +244,9 @@ public class ChangeTrackingService {
                 .map(cc -> cc.getDocumentChange().getId())
                 .collect(Collectors.toSet());
 
+        // 번역 매핑 구축 (lang이 있을 때만)
+        Map<Long, TranslatedRequirement> translationMap = buildTranslationMap(documentVersionId, lang);
+
         List<ChangeSummaryResponse.ChangeInfo> changeInfos = changes.stream()
                 .map(c -> new ChangeSummaryResponse.ChangeInfo(
                         c.getId(),
@@ -245,9 +254,9 @@ public class ChangeTrackingService {
                         c.getPageNumber(),
                         c.getScreenName(),
                         c.getPinNumber(),
-                        c.getItemDescription(),
-                        c.getBeforeValue(),
-                        c.getAfterValue(),
+                        translateItemDescription(c.getItemDescription(), c, translationMap),
+                        translateChangeValue(c.getBeforeValue(), translationMap),
+                        translateChangeValue(c.getAfterValue(), translationMap),
                         c.getModifiedBy().getFirstName(),
                         c.getModifiedBy().getLastName(),
                         c.getCreatedAt(),
@@ -259,6 +268,72 @@ public class ChangeTrackingService {
         int confirmed = (int) changeInfos.stream().filter(ChangeSummaryResponse.ChangeInfo::confirmedByMe).count();
 
         return new ChangeSummaryResponse(total, confirmed, total - confirmed, changeInfos);
+    }
+
+    private Map<Long, TranslatedRequirement> buildTranslationMap(Long documentVersionId, String lang) {
+        if (lang == null || lang.isBlank()) {
+            return Map.of();
+        }
+        List<TranslationLanguage> completedLanguages =
+                translationLanguageRepository
+                        .findByTranslationJob_DocumentVersion_IdAndTargetLanguageAndStatus(
+                                documentVersionId, lang, "COMPLETED");
+        if (completedLanguages.isEmpty()) {
+            return Map.of();
+        }
+        Long translationLanguageId = completedLanguages.getLast().getId();
+        List<TranslatedRequirement> allTranslated =
+                translatedRequirementRepository.findByTranslationLanguage_Id(translationLanguageId);
+        Map<Long, TranslatedRequirement> map = new HashMap<>();
+        for (TranslatedRequirement tr : allTranslated) {
+            map.put(tr.getRequirement().getId(), tr);
+        }
+        return map;
+    }
+
+    private String translateItemDescription(String original, DocumentChange change,
+                                             Map<Long, TranslatedRequirement> translationMap) {
+        if (translationMap.isEmpty()) return original;
+        // afterValue에서 requirementId를 찾아서 번역된 itemName 사용
+        String afterValue = change.getAfterValue();
+        if (afterValue == null) afterValue = change.getBeforeValue();
+        if (afterValue == null) return original;
+
+        for (TranslatedRequirement tr : translationMap.values()) {
+            if (Objects.equals(tr.getRequirement().getItemName(), original)) {
+                return tr.getTranslatedItemName();
+            }
+        }
+        return original;
+    }
+
+    private String translateChangeValue(String jsonValue, Map<Long, TranslatedRequirement> translationMap) {
+        if (jsonValue == null || translationMap.isEmpty()) return jsonValue;
+
+        // JSON에서 itemName과 content 추출
+        String itemName = extractJsonField(jsonValue, "itemName");
+        String content = extractJsonField(jsonValue, "content");
+        if (itemName == null && content == null) return jsonValue;
+
+        // 원본 itemName+content로 매칭되는 번역 찾기
+        for (TranslatedRequirement tr : translationMap.values()) {
+            Requirement req = tr.getRequirement();
+            if (Objects.equals(req.getItemName(), itemName) && Objects.equals(req.getContent(), content)) {
+                String tabType = extractJsonField(jsonValue, "tabType");
+                return toReqJson(tabType, tr.getTranslatedItemName(), tr.getTranslatedContent());
+            }
+        }
+        return jsonValue;
+    }
+
+    private String extractJsonField(String json, String field) {
+        String key = "\"" + field + "\":\"";
+        int start = json.indexOf(key);
+        if (start < 0) return null;
+        start += key.length();
+        int end = json.indexOf("\"", start);
+        if (end < 0) return null;
+        return json.substring(start, end).replace("\\\"", "\"").replace("\\\\", "\\");
     }
 
     // --- 확인 처리 ---
